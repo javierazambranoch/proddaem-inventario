@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}ProDaem - Historial{% endblock %}
+{% block contenido %}
+<h1>Historial de Actividades</h1>
+
+<div class="filtro-historial">
+    <a href="{{ url_for('historial', filtro='Todos') }}" class="{% if filtro == 'Todos' %}activo{% endif %}">Todos</a>
+    <a href="{{ url_for('historial', filtro='Mis actividades') }}" class="{% if filtro == 'Mis actividades' %}activo{% endif %}">Mis actividades</a>
+</div>
+
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Usuario</th>
+            <th>Acción</th>
+            <th>Fecha/Hora</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in registros %}
+        <tr>
+            <td>{{ r[0] }}</td>
+            <td>{{ r[1] }}</td>
+            <td>{{ r[2] }}</td>
+            <td>{{ r[3].strftime('%d/%m/%Y %H:%M:%S') if r[3] else '' }}</td>
+        </tr>
+        {% endfor %}
+        {% if not registros %}
+        <tr><td colspan="4" class="vacio">No hay registros.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+{% endblock %}

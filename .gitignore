@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.db
+build/
+dist/
+*.exe
+*.spec
+*.zip
+cloudflared*
+ngrok*
+tunnel_output.txt
+web_output.txt
+web_error.txt
+cloudflared_output.txt
+cloudflared_error.txt
+tunnel.log

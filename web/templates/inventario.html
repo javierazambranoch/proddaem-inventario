@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block titulo %}ProDaem - Inventario{% endblock %}
+{% block contenido %}
+<h1>Inventario de Equipos</h1>
+
+{% if es_daem %}
+<form method="GET" class="buscador">
+    <input type="text" name="buscar" placeholder="Buscar por código..." value="{{ buscar }}">
+    <select name="establecimiento">
+        <option value="0" {% if est_filtro == '0' %}selected{% endif %}>DAEM (Todos)</option>
+        {% for nombre, id in establecimientos.items() %}
+        <option value="{{ id }}" {% if est_filtro == id|string %}selected{% endif %}>{{ nombre }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Buscar</button>
+</form>
+{% endif %}
+
+{% if not es_daem %}
+<form method="POST" action="{{ url_for('inv_guardar') }}" class="formulario">
+    <input type="hidden" name="buscar" value="{{ buscar }}">
+    <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
+    <div class="campo">
+        <label>Código *</label>
+        <input type="text" name="codigo" required>
+    </div>
+    <div class="campo">
+        <label>Categoría *</label>
+        <select name="categoria" required>
+            <option value="Computador">Computador</option>
+            <option value="Monitor">Monitor</option>
+            <option value="Impresora">Impresora</option>
+            <option value="Tablet">Tablet</option>
+            <option value="Otro">Otro</option>
+        </select>
+    </div>
+    <div class="campo">
+        <label>Marca *</label>
+        <input type="text" name="marca" required>
+    </div>
+    <div class="campo">
+        <label>Modelo *</label>
+        <input type="text" name="modelo" required>
+    </div>
+    <div class="campo">
+        <label>Estado *</label>
+        <select name="estado" id="sel-estado" required>
+            <option value="bueno">Bueno</option>
+            <option value="regular">Regular</option>
+            <option value="malo">Malo</option>
+        </select>
+    </div>
+    <div class="campo campo-condicion" id="campo-condicion" style="display:none;">
+        <label>Descripción del estado</label>
+        <textarea name="condicion" rows="2" placeholder="Describe el estado del equipo..."></textarea>
+    </div>
+    <div class="campo">
+        <label>Ubicación *</label>
+        <input type="text" name="ubicacion" required placeholder="Ej: Sala 3">
+    </div>
+    <button type="submit" class="btn-guardar">Guardar Equipo</button>
+</form>
+{% endif %}
+
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Categoría</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Estado</th>
+            <th>Ubicación</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for eq in equipos %}
+        <tr>
+            <td>{{ eq[0] }}</td>
+            <td>{{ eq[1] }}</td>
+            <td>{{ eq[2] }}</td>
+            <td>{{ eq[3] }}</td>
+            <td><span class="badge badge-{{ eq[4] }}">{{ eq[4] }}</span></td>
+            <td>{{ eq[5] }}</td>
+            <td>
+                {% if es_daem or not es_daem %}
+                <form method="POST" action="{{ url_for('inv_eliminar', codigo=eq[0]) }}" class="inline"
+                      onsubmit="return confirm('¿Eliminar equipo {{ eq[0] }}?')">
+                    <input type="hidden" name="buscar" value="{{ buscar }}">
+                    <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
+                    <button type="submit" class="btn-eliminar" title="Eliminar">&#10005;</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        {% if not equipos %}
+        <tr><td colspan="7" class="vacio">No se encontraron equipos.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<script>
+document.getElementById('sel-estado')?.addEventListener('change', function() {
+    var c = document.getElementById('campo-condicion');
+    c.style.display = (this.value === 'regular' || this.value === 'malo') ? 'block' : 'none';
+});
+</script>
+{% endblock %}

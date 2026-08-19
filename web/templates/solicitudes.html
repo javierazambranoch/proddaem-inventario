@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block titulo %}ProDaem - Solicitudes{% endblock %}
+{% block contenido %}
+<h1>Solicitudes</h1>
+
+{% if es_daem %}
+<form method="GET" class="buscador">
+    <input type="text" name="buscar" placeholder="Buscar por producto..." value="{{ buscar }}">
+    <select name="establecimiento">
+        <option value="0" {% if est_filtro == '0' %}selected{% endif %}>DAEM (Todos)</option>
+        {% for nombre, id in establecimientos.items() %}
+        <option value="{{ id }}" {% if est_filtro == id|string %}selected{% endif %}>{{ nombre }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Buscar</button>
+</form>
+{% endif %}
+
+{% if not es_daem %}
+<form method="POST" action="{{ url_for('sol_enviar') }}" class="formulario">
+    <div class="campo">
+        <label>Producto *</label>
+        <input type="text" name="producto" required placeholder="Ej: Computador de escritorio">
+    </div>
+    <div class="campo">
+        <label>Cantidad *</label>
+        <input type="number" name="cantidad" required min="1" value="1">
+    </div>
+    <div class="campo">
+        <label>Prioridad</label>
+        <select name="prioridad">
+            <option value="baja">Baja</option>
+            <option value="media" selected>Media</option>
+            <option value="alta">Alta</option>
+            <option value="urgente">Urgente</option>
+        </select>
+    </div>
+    <div class="campo">
+        <label>Características</label>
+        <input type="text" name="caracteristicas" placeholder="Ej: 16GB RAM, 500GB SSD">
+    </div>
+    <div class="campo">
+        <label>Descripción *</label>
+        <textarea name="descripcion" rows="2" required placeholder="Describe la solicitud..."></textarea>
+    </div>
+    <button type="submit" class="btn-guardar">Enviar Solicitud</button>
+</form>
+{% endif %}
+
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>N°</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Prioridad</th>
+            <th>Estado</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in solicitudes %}
+        <tr>
+            <td>{{ s[0] }}</td>
+            <td>{{ s[1] }}</td>
+            <td>{{ s[2] }}</td>
+            <td><span class="badge badge-prioridad">{{ s[3] }}</span></td>
+            <td>
+                {% if es_daem %}
+                <form method="POST" action="{{ url_for('sol_cambiar_estado', id_solicitud=s[0]) }}" class="inline">
+                    <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
+                    <select name="nuevo_estado" onchange="this.form.submit()">
+                        <option value="" disabled selected>{{ s[4] }}</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="en proceso">En proceso</option>
+                        <option value="completada">Completada</option>
+                        <option value="rechazada">Rechazada</option>
+                    </select>
+                </form>
+                {% else %}
+                <span class="badge badge-{{ s[4] }}">{{ s[4] }}</span>
+                {% endif %}
+            </td>
+            <td>
+                <form method="POST" action="{{ url_for('sol_eliminar', id_solicitud=s[0]) }}" class="inline"
+                      onsubmit="return confirm('¿Eliminar solicitud N° {{ s[0] }}?')">
+                    <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
+                    <button type="submit" class="btn-eliminar" title="Eliminar">&#10005;</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        {% if not solicitudes %}
+        <tr><td colspan="6" class="vacio">No se encontraron solicitudes.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+{% endblock %}

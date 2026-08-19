@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block titulo %}ProDaem - Inicio{% endblock %}
+{% block contenido %}
+<h1>Panel de Control</h1>
+<div class="tarjetas">
+    <a href="{{ url_for('inventario') }}" class="tarjeta">
+        <div class="tarjeta-icono">&#128187;</div>
+        <h3>Inventario</h3>
+        <p>Gestión de equipos tecnológicos</p>
+    </a>
+    <a href="{{ url_for('solicitudes') }}" class="tarjeta">
+        <div class="tarjeta-icono">&#128203;</div>
+        <h3>Solicitudes</h3>
+        <p>Solicitudes de mantención y reposición</p>
+    </a>
+    <a href="{{ url_for('historial') }}" class="tarjeta">
+        <div class="tarjeta-icono">&#128214;</div>
+        <h3>Historial</h3>
+        <p>Registro de actividades</p>
+    </a>
+</div>
+{% endblock %}
