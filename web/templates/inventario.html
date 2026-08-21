@@ -26,13 +26,7 @@
     </div>
     <div class="campo">
         <label>Categoría *</label>
-        <select name="categoria" required>
-            <option value="Computador">Computador</option>
-            <option value="Monitor">Monitor</option>
-            <option value="Impresora">Impresora</option>
-            <option value="Tablet">Tablet</option>
-            <option value="Otro">Otro</option>
-        </select>
+        <input type="text" name="categoria" required placeholder="Ej: Computador, Monitor, Tablet...">
     </div>
     <div class="campo">
         <label>Marca *</label>
@@ -62,6 +56,7 @@
 </form>
 {% endif %}
 
+<div class="tabla-container">
 <table class="tabla">
     <thead>
         <tr>
@@ -100,6 +95,7 @@
         {% endif %}
     </tbody>
 </table>
+</div>
 
 <script>
 document.getElementById('sel-estado')?.addEventListener('change', function() {

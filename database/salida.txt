@@ -1,0 +1,5 @@
+Import de conexion: OK
+Hash calculado en Python: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'
+Conexión a Supabase: OK
+Hash guardado en Supabase: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'
+Resultado de la consulta completa: (4, 4)

@@ -23,6 +23,10 @@
         <input type="text" name="producto" required placeholder="Ej: Computador de escritorio">
     </div>
     <div class="campo">
+        <label>Profesor a cargo *</label>
+        <input type="text" name="profesor" required placeholder="Nombre del profesor responsable">
+    </div>
+    <div class="campo">
         <label>Cantidad *</label>
         <input type="number" name="cantidad" required min="1" value="1">
     </div>
@@ -39,19 +43,21 @@
         <label>Características</label>
         <input type="text" name="caracteristicas" placeholder="Ej: 16GB RAM, 500GB SSD">
     </div>
-    <div class="campo">
+    <div class="campo" style="grid-column: 1 / -1;">
         <label>Descripción *</label>
-        <textarea name="descripcion" rows="2" required placeholder="Describe la solicitud..."></textarea>
+        <textarea name="descripcion" rows="3" required placeholder="Describe la solicitud..."></textarea>
     </div>
     <button type="submit" class="btn-guardar">Enviar Solicitud</button>
 </form>
 {% endif %}
 
+<div class="tabla-container">
 <table class="tabla">
     <thead>
         <tr>
             <th>N°</th>
             <th>Producto</th>
+            <th>Profesor</th>
             <th>Cantidad</th>
             <th>Prioridad</th>
             <th>Estado</th>
@@ -63,14 +69,15 @@
         <tr>
             <td>{{ s[0] }}</td>
             <td>{{ s[1] }}</td>
-            <td>{{ s[2] }}</td>
-            <td><span class="badge badge-prioridad">{{ s[3] }}</span></td>
+            <td>{{ s[2] if s[2] else '-' }}</td>
+            <td>{{ s[3] }}</td>
+            <td><span class="badge badge-prioridad">{{ s[4] }}</span></td>
             <td>
                 {% if es_daem %}
                 <form method="POST" action="{{ url_for('sol_cambiar_estado', id_solicitud=s[0]) }}" class="inline">
                     <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
                     <select name="nuevo_estado" onchange="this.form.submit()">
-                        <option value="" disabled selected>{{ s[4] }}</option>
+                        <option value="" disabled selected>{{ s[5] }}</option>
                         <option value="pendiente">Pendiente</option>
                         <option value="en proceso">En proceso</option>
                         <option value="completada">Completada</option>
@@ -78,7 +85,7 @@
                     </select>
                 </form>
                 {% else %}
-                <span class="badge badge-{{ s[4] }}">{{ s[4] }}</span>
+                <span class="badge badge-{{ s[5] }}">{{ s[5] }}</span>
                 {% endif %}
             </td>
             <td>
@@ -91,8 +98,9 @@
         </tr>
         {% endfor %}
         {% if not solicitudes %}
-        <tr><td colspan="6" class="vacio">No se encontraron solicitudes.</td></tr>
+        <tr><td colspan="7" class="vacio">No se encontraron solicitudes.</td></tr>
         {% endif %}
     </tbody>
 </table>
+</div>
 {% endblock %}

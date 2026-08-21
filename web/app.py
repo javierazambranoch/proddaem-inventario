@@ -299,13 +299,13 @@ def solicitudes():
         if es_daem and buscar:
             if est_filtro == "0":
                 cur.execute(
-                    "SELECT id_solicitud, nombre_producto, cantidad, prioridad, estado "
+                    "SELECT id_solicitud, nombre_producto, nro_serie, cantidad, prioridad, estado "
                     "FROM solicitud WHERE nombre_producto ILIKE %s ORDER BY fecha_solicitud DESC",
                     (f"%{buscar}%",)
                 )
             else:
                 cur.execute(
-                    "SELECT id_solicitud, nombre_producto, cantidad, prioridad, estado "
+                    "SELECT id_solicitud, nombre_producto, nro_serie, cantidad, prioridad, estado "
                     "FROM solicitud WHERE nombre_producto ILIKE %s AND id_establecimiento = %s "
                     "ORDER BY fecha_solicitud DESC",
                     (f"%{buscar}%", est_filtro)
@@ -313,18 +313,18 @@ def solicitudes():
         elif es_daem:
             if est_filtro == "0":
                 cur.execute(
-                    "SELECT id_solicitud, nombre_producto, cantidad, prioridad, estado "
+                    "SELECT id_solicitud, nombre_producto, nro_serie, cantidad, prioridad, estado "
                     "FROM solicitud ORDER BY fecha_solicitud DESC"
                 )
             else:
                 cur.execute(
-                    "SELECT id_solicitud, nombre_producto, cantidad, prioridad, estado "
+                    "SELECT id_solicitud, nombre_producto, nro_serie, cantidad, prioridad, estado "
                     "FROM solicitud WHERE id_establecimiento = %s ORDER BY fecha_solicitud DESC",
                     (est_filtro,)
                 )
         else:
             cur.execute(
-                "SELECT id_solicitud, nombre_producto, cantidad, prioridad, estado "
+                "SELECT id_solicitud, nombre_producto, nro_serie, cantidad, prioridad, estado "
                 "FROM solicitud WHERE id_usuario = %s AND id_establecimiento = %s "
                 "ORDER BY fecha_solicitud DESC",
                 (id_usuario, id_est)
@@ -353,14 +353,15 @@ def sol_enviar():
     id_usuario = session["id_usuario"]
     id_est = session["id_establecimiento"]
 
+    profesor = request.form.get("profesor", "").strip()
     producto = request.form.get("producto", "").strip()
     cantidad = request.form.get("cantidad", "").strip()
     prioridad = request.form.get("prioridad", "media").strip()
     caracteristicas = request.form.get("caracteristicas", "").strip()
     descripcion = request.form.get("descripcion", "").strip()
 
-    if not producto or not cantidad or not descripcion:
-        flash("Producto, cantidad y descripción son obligatorios.", "warning")
+    if not producto or not cantidad or not descripcion or not profesor:
+        flash("Producto, profesor a cargo, cantidad y descripción son obligatorios.", "warning")
         return redirect(url_for("solicitudes"))
 
     try:
@@ -379,7 +380,7 @@ def sol_enviar():
             (nombre_producto, nro_serie, cantidad, caracteristicas,
              estado, descripcion, prioridad, id_usuario, id_establecimiento)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-            (producto, None, cantidad_num,
+            (producto, profesor, cantidad_num,
              caracteristicas if caracteristicas else None,
              "pendiente", descripcion, prioridad, id_usuario, id_est)
         )
