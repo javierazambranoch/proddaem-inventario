@@ -3,9 +3,18 @@
 {% block contenido %}
 <h1>Chat</h1>
 
+{% if es_daem %}
+<div class="buscador">
+    <a href="{{ url_for('chat', establecimiento='0') }}" class="filtro-chat {% if est_filtro == '0' %}activo{% endif %}">General</a>
+    {% for nombre, id in establecimientos.items() %}
+    <a href="{{ url_for('chat', establecimiento=id|string) }}" class="filtro-chat {% if est_filtro == id|string %}activo{% endif %}">{{ nombre }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="chat-container">
     <div class="chat-mensajes" id="chat-mensajes">
-        {% for msg, fecha, usr, est in mensajes %}
+        {% for msg, fecha, usr in mensajes %}
         <div class="chat-msg {% if usr == usuario %}chat-mio{% else %}chat-otro{% endif %}">
             <span class="chat-usuario">{{ usr }}</span>
             <span class="chat-texto">{{ msg }}</span>
@@ -17,6 +26,9 @@
         {% endif %}
     </div>
     <form method="POST" class="chat-form">
+        {% if es_daem %}
+        <input type="hidden" name="destino" value="{{ est_filtro }}">
+        {% endif %}
         <input type="text" name="mensaje" id="chat-input" placeholder="Escribe tu mensaje..." required autocomplete="off">
         <button type="submit">Enviar</button>
     </form>

@@ -60,9 +60,14 @@ def crear_tabla_mensajes():
                 id_mensaje SERIAL PRIMARY KEY,
                 id_usuario INTEGER NOT NULL,
                 mensaje TEXT NOT NULL,
+                id_establecimiento_destino INTEGER,
                 fecha_hora TIMESTAMP DEFAULT NOW()
             )
         """)
+        try:
+            cur.execute("ALTER TABLE Mensaje ADD COLUMN IF NOT EXISTS id_establecimiento_destino INTEGER")
+        except Exception:
+            pass
         conn.commit()
         conn.close()
     except Exception as e:
@@ -525,23 +530,29 @@ def chat():
     id_usuario = session["id_usuario"]
     id_est = session["id_establecimiento"]
     nombre_display = session.get("nombre_display", session["usuario"])
+    est_filtro = request.args.get("establecimiento", str(id_est) if not es_daem else "0")
 
     session["chat_ultimo_visita"] = datetime.now()
 
     if request.method == "POST":
         mensaje = request.form.get("mensaje", "").strip()
+        dest = request.form.get("destino", str(id_est) if not es_daem else "0")
         if mensaje:
             try:
                 conn = obtener_conexion()
                 cur = conn.cursor()
+                dest_val = int(dest) if dest != "0" else None
                 cur.execute(
-                    "INSERT INTO Mensaje (id_usuario, mensaje, fecha_hora) VALUES (%s, %s, %s)",
-                    (id_usuario, mensaje, datetime.now())
+                    "INSERT INTO Mensaje (id_usuario, mensaje, id_establecimiento_destino, fecha_hora) "
+                    "VALUES (%s, %s, %s, %s)",
+                    (id_usuario, mensaje, dest_val, datetime.now())
                 )
                 conn.commit()
                 conn.close()
             except Exception as e:
                 flash(f"Error al enviar mensaje: {e}", "danger")
+        if es_daem:
+            return redirect(url_for("chat", establecimiento=dest))
         return redirect(url_for("chat"))
 
     mensajes = []
@@ -549,18 +560,31 @@ def chat():
         conn = obtener_conexion()
         cur = conn.cursor()
         if es_daem:
-            cur.execute(
-                "SELECT m.mensaje, m.fecha_hora, u.nombre_usuario, u.id_establecimiento "
-                "FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
-                "ORDER BY m.fecha_hora ASC"
-            )
+            if est_filtro != "0":
+                cur.execute(
+                    "SELECT m.mensaje, m.fecha_hora, u.nombre_usuario "
+                    "FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
+                    "WHERE (m.id_establecimiento_destino = %s AND u.nombre_usuario = 'admin_daem') "
+                    "OR (u.id_establecimiento = %s AND m.id_establecimiento_destino IS NULL) "
+                    "OR (u.id_establecimiento = %s) "
+                    "ORDER BY m.fecha_hora ASC",
+                    (est_filtro, est_filtro, est_filtro)
+                )
+            else:
+                cur.execute(
+                    "SELECT m.mensaje, m.fecha_hora, u.nombre_usuario "
+                    "FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
+                    "WHERE m.id_establecimiento_destino IS NULL "
+                    "ORDER BY m.fecha_hora ASC"
+                )
         else:
             cur.execute(
-                "SELECT m.mensaje, m.fecha_hora, u.nombre_usuario, u.id_establecimiento "
+                "SELECT m.mensaje, m.fecha_hora, u.nombre_usuario "
                 "FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
-                "WHERE u.id_establecimiento = %s OR u.nombre_usuario = 'admin_daem' "
+                "WHERE (u.id_establecimiento = %s AND m.id_establecimiento_destino IS NULL) "
+                "OR (m.id_establecimiento_destino = %s AND u.nombre_usuario = 'admin_daem') "
                 "ORDER BY m.fecha_hora ASC",
-                (id_est,)
+                (id_est, id_est)
             )
         mensajes = cur.fetchall()
         conn.close()
@@ -571,7 +595,9 @@ def chat():
                            usuario=session["usuario"],
                            nombre_display=nombre_display,
                            es_daem=es_daem,
-                           mensajes=mensajes)
+                           mensajes=mensajes,
+                           est_filtro=est_filtro,
+                           establecimientos=ESTABLECIMIENTOS)
 
     try:
         conn = obtener_conexion()

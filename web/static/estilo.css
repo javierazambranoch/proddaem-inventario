@@ -46,6 +46,9 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .chat-form button { padding: 12px 24px; background: #1565c0; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
 .chat-form button:hover { background: #1256a0; }
 
+.filtro-chat { padding: 8px 16px; border-radius: 6px; text-decoration: none; color: #666; background: #fff; border: 1px solid #ddd; font-size: 13px; white-space: nowrap; }
+.filtro-chat.activo { background: #1565c0; color: #fff; border-color: #1565c0; }
+
 .buscador { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .buscador input, .buscador select { padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
 .buscador input { flex: 1; min-width: 200px; }
