@@ -19,6 +19,10 @@
 {% if not es_daem %}
 <form method="POST" action="{{ url_for('sol_enviar') }}" class="formulario">
     <div class="campo">
+        <label>Producto *</label>
+        <input type="text" name="producto" required placeholder="Ej: Computador de escritorio">
+    </div>
+    <div class="campo">
         <label>Marca *</label>
         <input type="text" name="marca" required placeholder="Ej: Dell, HP, Lenovo...">
     </div>
@@ -40,11 +44,11 @@
         </select>
     </div>
     <div class="campo">
-        <label>Características</label>
+        <label>Caracteristicas</label>
         <input type="text" name="caracteristicas" placeholder="Ej: 16GB RAM, 500GB SSD">
     </div>
     <div class="campo" style="grid-column: 1 / -1;">
-        <label>Descripción *</label>
+        <label>Descripcion *</label>
         <textarea name="descripcion" rows="3" required placeholder="Describe la solicitud..."></textarea>
     </div>
     <button type="submit" class="btn-guardar">Enviar Solicitud</button>
@@ -55,7 +59,8 @@
 <table class="tabla">
     <thead>
         <tr>
-            <th>N°</th>
+            <th>N</th>
+            <th>Producto</th>
             <th>Marca</th>
             <th>Modelo</th>
             <th>Cantidad</th>
@@ -66,10 +71,12 @@
     </thead>
     <tbody>
         {% for s in solicitudes %}
+        {% set parts = s[2].split(' ', 1) if s[2] else [] %}
         <tr>
             <td>{{ s[0] }}</td>
             <td>{{ s[1] }}</td>
-            <td>{{ s[2] if s[2] else '-' }}</td>
+            <td>{{ parts[0] if parts else '-' }}</td>
+            <td>{{ parts[1] if parts|length > 1 else '-' }}</td>
             <td>{{ s[3] }}</td>
             <td><span class="badge badge-prioridad">{{ s[4] }}</span></td>
             <td>
@@ -90,7 +97,7 @@
             </td>
             <td>
                 <form method="POST" action="{{ url_for('sol_eliminar', id_solicitud=s[0]) }}" class="inline"
-                      onsubmit="return confirm('¿Eliminar solicitud N° {{ s[0] }}?')">
+                      onsubmit="return confirm('Eliminar solicitud N {{ s[0] }}?')">
                     <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
                     <button type="submit" class="btn-eliminar" title="Eliminar">&#10005;</button>
                 </form>
@@ -98,7 +105,7 @@
         </tr>
         {% endfor %}
         {% if not solicitudes %}
-        <tr><td colspan="7" class="vacio">No se encontraron solicitudes.</td></tr>
+        <tr><td colspan="8" class="vacio">No se encontraron solicitudes.</td></tr>
         {% endif %}
     </tbody>
 </table>
