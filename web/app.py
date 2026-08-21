@@ -585,6 +585,7 @@ def chat():
                 "FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
                 "WHERE (u.id_establecimiento = %s AND m.id_establecimiento_destino IS NULL) "
                 "OR (m.id_establecimiento_destino = %s AND u.nombre_usuario = 'admin_daem') "
+                "OR (m.id_establecimiento_destino IS NULL AND u.nombre_usuario = 'admin_daem') "
                 "ORDER BY m.fecha_hora ASC",
                 (id_est, id_est)
             )
