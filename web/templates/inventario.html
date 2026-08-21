@@ -20,6 +20,7 @@
 <form method="POST" action="{{ url_for('inv_guardar') }}" class="formulario">
     <input type="hidden" name="buscar" value="{{ buscar }}">
     <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
+    <input type="hidden" name="requiere" id="sol-requiere-hidden" value="">
     <div class="campo">
         <label>Código *</label>
         <input type="text" name="codigo" required>
@@ -50,10 +51,18 @@
     </div>
     <div id="panel-solicitud" style="display:none; grid-column: 1 / -1; background:#e3f2fd; padding:16px; border-radius:8px; margin-top:8px;">
         <strong style="color:#1565c0;">Se creara una solicitud automatica</strong>
-        <p style="font-size:12px; color:#666; margin:6px 0 12px 0;">El sistema enviara una solicitud de mantencion/reposicion con estos datos:</p>
+        <p style="font-size:12px; color:#666; margin:6px 0 12px 0;">El sistema enviara una solicitud con estos datos:</p>
         <div class="campo">
-            <label>Producto</label>
-            <input type="text" id="sol-producto" readonly style="background:#fff;">
+            <label>Requiere *</label>
+            <input type="text" id="sol-requiere" placeholder="Ej: Mantencion, Reposicion...">
+        </div>
+        <div class="campo">
+            <label>Codigo</label>
+            <input type="text" id="sol-codigo" readonly style="background:#fff;">
+        </div>
+        <div class="campo">
+            <label>Categoria</label>
+            <input type="text" id="sol-categoria" readonly style="background:#fff;">
         </div>
         <div class="campo">
             <label>Marca</label>
@@ -63,8 +72,12 @@
             <label>Modelo</label>
             <input type="text" id="sol-modelo" readonly style="background:#fff;">
         </div>
+        <div class="campo">
+            <label>Estado</label>
+            <input type="text" id="sol-estado" readonly style="background:#fff;">
+        </div>
         <div class="campo" style="grid-column: 1 / -1;">
-            <label>Descripcion</label>
+            <label>Descripcion del estado</label>
             <textarea id="sol-descripcion" rows="2" readonly style="background:#fff;"></textarea>
         </div>
     </div>
@@ -126,18 +139,23 @@ document.getElementById('sel-estado')?.addEventListener('change', function() {
     p.style.display = (val === 'regular' || val === 'malo') ? 'grid' : 'none';
 
     if (val === 'regular' || val === 'malo') {
-        var tipo = val === 'regular' ? 'Mantencion' : 'Reposicion';
         var cat = document.querySelector('input[name="categoria"]').value || '';
         var mar = document.querySelector('input[name="marca"]').value || '';
         var mod = document.querySelector('input[name="modelo"]').value || '';
         var cod = document.querySelector('input[name="codigo"]').value || '';
         var ubi = document.querySelector('input[name="ubicacion"]').value || '';
 
-        document.getElementById('sol-producto').value = tipo + ' - ' + cat + ' ' + mar + ' ' + mod;
+        document.getElementById('sol-codigo').value = cod;
+        document.getElementById('sol-categoria').value = cat;
         document.getElementById('sol-marca').value = mar;
         document.getElementById('sol-modelo').value = mod;
-        document.getElementById('sol-descripcion').value = 'Solicitud automatica desde Inventario.\nEquipo: ' + cod + '\nEstado: ' + val + '\nUbicacion: ' + ubi;
+        document.getElementById('sol-estado').value = val;
+        document.getElementById('sol-descripcion').value = 'Equipo: ' + cod + '\nEstado: ' + val + '\nUbicacion: ' + ubi;
     }
+});
+
+document.getElementById('sol-requiere')?.addEventListener('input', function() {
+    document.getElementById('sol-requiere-hidden').value = this.value;
 });
 </script>
 {% endblock %}

@@ -215,6 +215,7 @@ def inv_guardar():
     ubicacion = request.form.get("ubicacion", "").strip()
     condicion = request.form.get("condicion", "").strip()
     est_filtro = request.form.get("est_filtro", str(session["id_establecimiento"]))
+    requiere = request.form.get("requiere", "").strip()
 
     if es_daem:
         id_establecimiento = int(est_filtro) if est_filtro != "0" else session["id_establecimiento"]
@@ -240,9 +241,8 @@ def inv_guardar():
 
         solicitud_creada = False
         if estado in ("regular", "malo"):
-            tipo = "mantencion" if estado == "regular" else "reposicion"
             prioridad = "media" if estado == "regular" else "alta"
-            nombre_prod = f"{tipo.capitalize()} - {categoria} {marca} {modelo}"
+            nombre_prod = f"{requiere.capitalize() if requiere else 'Solicitud'} - {categoria} {marca} {modelo}"
             caracts = f"Código: {codigo} | Marca: {marca} | Modelo: {modelo} | Ubicación: {ubicacion}"
             desc = f"Solicitud automática desde Inventario.\nEquipo: {codigo}\nEstado: {estado}\nCondición: {condicion}"
             cur.execute(
