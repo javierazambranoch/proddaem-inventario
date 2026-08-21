@@ -21,6 +21,7 @@
     <input type="hidden" name="buscar" value="{{ buscar }}">
     <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
     <input type="hidden" name="requiere" id="sol-requiere-hidden" value="">
+    <input type="hidden" name="desc_solicitud" id="sol-desc-hidden" value="">
     <div class="campo">
         <label>Código *</label>
         <input type="text" name="codigo" required>
@@ -56,29 +57,9 @@
             <label>Requiere *</label>
             <input type="text" id="sol-requiere" placeholder="Ej: Mantencion, Reposicion...">
         </div>
-        <div class="campo">
-            <label>Codigo</label>
-            <input type="text" id="sol-codigo" readonly style="background:#fff;">
-        </div>
-        <div class="campo">
-            <label>Categoria</label>
-            <input type="text" id="sol-categoria" readonly style="background:#fff;">
-        </div>
-        <div class="campo">
-            <label>Marca</label>
-            <input type="text" id="sol-marca" readonly style="background:#fff;">
-        </div>
-        <div class="campo">
-            <label>Modelo</label>
-            <input type="text" id="sol-modelo" readonly style="background:#fff;">
-        </div>
-        <div class="campo">
-            <label>Estado</label>
-            <input type="text" id="sol-estado" readonly style="background:#fff;">
-        </div>
         <div class="campo" style="grid-column: 1 / -1;">
             <label>Descripcion del estado</label>
-            <textarea id="sol-descripcion" rows="2" readonly style="background:#fff;"></textarea>
+            <textarea id="sol-descripcion" rows="2" placeholder="Describe el estado del equipo..."></textarea>
         </div>
     </div>
     <div class="campo">
@@ -137,25 +118,14 @@ document.getElementById('sel-estado')?.addEventListener('change', function() {
     var val = this.value;
     c.style.display = (val === 'regular' || val === 'malo') ? 'block' : 'none';
     p.style.display = (val === 'regular' || val === 'malo') ? 'grid' : 'none';
-
-    if (val === 'regular' || val === 'malo') {
-        var cat = document.querySelector('input[name="categoria"]').value || '';
-        var mar = document.querySelector('input[name="marca"]').value || '';
-        var mod = document.querySelector('input[name="modelo"]').value || '';
-        var cod = document.querySelector('input[name="codigo"]').value || '';
-        var ubi = document.querySelector('input[name="ubicacion"]').value || '';
-
-        document.getElementById('sol-codigo').value = cod;
-        document.getElementById('sol-categoria').value = cat;
-        document.getElementById('sol-marca').value = mar;
-        document.getElementById('sol-modelo').value = mod;
-        document.getElementById('sol-estado').value = val;
-        document.getElementById('sol-descripcion').value = 'Equipo: ' + cod + '\nEstado: ' + val + '\nUbicacion: ' + ubi;
-    }
 });
 
 document.getElementById('sol-requiere')?.addEventListener('input', function() {
     document.getElementById('sol-requiere-hidden').value = this.value;
+});
+
+document.getElementById('sol-descripcion')?.addEventListener('input', function() {
+    document.getElementById('sol-desc-hidden').value = this.value;
 });
 </script>
 {% endblock %}

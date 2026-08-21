@@ -216,6 +216,7 @@ def inv_guardar():
     condicion = request.form.get("condicion", "").strip()
     est_filtro = request.form.get("est_filtro", str(session["id_establecimiento"]))
     requiere = request.form.get("requiere", "").strip()
+    desc_solicitud = request.form.get("desc_solicitud", "").strip()
 
     if es_daem:
         id_establecimiento = int(est_filtro) if est_filtro != "0" else session["id_establecimiento"]
@@ -244,7 +245,7 @@ def inv_guardar():
             prioridad = "media" if estado == "regular" else "alta"
             nombre_prod = f"{requiere.capitalize() if requiere else 'Solicitud'} - {categoria} {marca} {modelo}"
             caracts = f"Código: {codigo} | Marca: {marca} | Modelo: {modelo} | Ubicación: {ubicacion}"
-            desc = f"Solicitud automática desde Inventario.\nEquipo: {codigo}\nEstado: {estado}\nCondición: {condicion}"
+            desc = desc_solicitud if desc_solicitud else f"Solicitud automática desde Inventario.\nEquipo: {codigo}\nEstado: {estado}"
             cur.execute(
                 """INSERT INTO solicitud
                 (nombre_producto, nro_serie, cantidad, caracteristicas,
