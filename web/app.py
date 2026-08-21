@@ -567,6 +567,7 @@ def chat():
                     "WHERE (m.id_establecimiento_destino = %s AND u.nombre_usuario = 'admin_daem') "
                     "OR (u.id_establecimiento = %s AND m.id_establecimiento_destino IS NULL) "
                     "OR (u.id_establecimiento = %s) "
+                    "OR (m.id_establecimiento_destino IS NULL AND u.nombre_usuario = 'admin_daem') "
                     "ORDER BY m.fecha_hora ASC",
                     (est_filtro, est_filtro, est_filtro)
                 )
