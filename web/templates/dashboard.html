@@ -9,24 +9,7 @@
     Tiene <strong>{{ solicitudes_pendientes }}</strong> solicitud(es) pendiente(s).
     <a href="{{ url_for('solicitudes') }}">Ver solicitudes</a>
 </div>
-{% endif %}
-
-{% if notificaciones %}
-<div class="notificaciones">
-    <h3>Actividad reciente</h3>
-    <ul>
-        {% for accion, fecha, usr in notificaciones %}
-        <li>
-            <span class="notif-usuario">{{ usr }}</span>
-            {{ accion }}
-            {% if fecha %}
-            <span class="notif-fecha">{{ fecha.strftime('%d/%m/%Y %H:%M') }}</span>
-            {% endif %}
-        </li>
-        {% endfor %}
-    </ul>
-</div>
 {% else %}
-<p style="color:#888;">No hay actividad reciente.</p>
+<p style="color:#888;">No hay solicitudes pendientes.</p>
 {% endif %}
 {% endblock %}

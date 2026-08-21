@@ -110,7 +110,6 @@ def dashboard():
 
     es_daem = session["usuario"].lower() == "admin_daem"
     nombre_display = session.get("nombre_display", session["usuario"])
-    notificaciones = []
     solicitudes_pendientes = 0
 
     try:
@@ -119,21 +118,11 @@ def dashboard():
 
         if not es_daem:
             id_est = session["id_establecimiento"]
-
             cur.execute(
                 "SELECT COUNT(*) FROM solicitud WHERE id_establecimiento = %s AND estado = 'pendiente'",
                 (id_est,)
             )
             solicitudes_pendientes = cur.fetchone()[0]
-
-            cur.execute(
-                "SELECT h.accion, h.fecha_hora, u.nombre_usuario "
-                "FROM Historial h JOIN Usuario u ON h.id_usuario = u.id_usuario "
-                "WHERE u.id_establecimiento = %s "
-                "ORDER BY h.fecha_hora DESC LIMIT 10",
-                (id_est,)
-            )
-            notificaciones = cur.fetchall()
 
         conn.close()
     except Exception as e:
@@ -143,7 +132,6 @@ def dashboard():
                            usuario=session["usuario"],
                            nombre_display=nombre_display,
                            es_daem=es_daem,
-                           notificaciones=notificaciones,
                            solicitudes_pendientes=solicitudes_pendientes)
 
 
