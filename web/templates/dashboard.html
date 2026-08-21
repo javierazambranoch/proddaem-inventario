@@ -2,10 +2,5 @@
 {% block titulo %}ProDaem - Inicio{% endblock %}
 {% block contenido %}
 <h1>Panel de Control</h1>
-<p style="color:#666; margin-bottom:20px;">Bienvenido, {{ usuario }}</p>
-<div style="display:flex; gap:16px; flex-wrap:wrap;">
-    <a href="{{ url_for('inventario') }}" style="flex:1; min-width:200px; padding:20px; background:#e3f2fd; border-radius:8px; text-decoration:none; color:#1565c0; font-weight:600; text-align:center;">Inventario</a>
-    <a href="{{ url_for('solicitudes') }}" style="flex:1; min-width:200px; padding:20px; background:#e3f2fd; border-radius:8px; text-decoration:none; color:#1565c0; font-weight:600; text-align:center;">Solicitudes</a>
-    <a href="{{ url_for('historial') }}" style="flex:1; min-width:200px; padding:20px; background:#e3f2fd; border-radius:8px; text-decoration:none; color:#1565c0; font-weight:600; text-align:center;">Historial</a>
-</div>
+<p>Bienvenido, {{ usuario }}</p>
 {% endblock %}

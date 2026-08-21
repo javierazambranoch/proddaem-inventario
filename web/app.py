@@ -353,15 +353,15 @@ def sol_enviar():
     id_usuario = session["id_usuario"]
     id_est = session["id_establecimiento"]
 
-    profesor = request.form.get("profesor", "").strip()
+    categoria = request.form.get("categoria", "").strip()
     producto = request.form.get("producto", "").strip()
     cantidad = request.form.get("cantidad", "").strip()
     prioridad = request.form.get("prioridad", "media").strip()
     caracteristicas = request.form.get("caracteristicas", "").strip()
     descripcion = request.form.get("descripcion", "").strip()
 
-    if not producto or not cantidad or not descripcion or not profesor:
-        flash("Producto, profesor a cargo, cantidad y descripción son obligatorios.", "warning")
+    if not producto or not cantidad or not descripcion or not categoria:
+        flash("Producto, categoría, cantidad y descripción son obligatorios.", "warning")
         return redirect(url_for("solicitudes"))
 
     try:
@@ -380,7 +380,7 @@ def sol_enviar():
             (nombre_producto, nro_serie, cantidad, caracteristicas,
              estado, descripcion, prioridad, id_usuario, id_establecimiento)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-            (producto, profesor, cantidad_num,
+            (producto, categoria, cantidad_num,
              caracteristicas if caracteristicas else None,
              "pendiente", descripcion, prioridad, id_usuario, id_est)
         )
