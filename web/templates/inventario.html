@@ -45,8 +45,28 @@
         </select>
     </div>
     <div class="campo campo-condicion" id="campo-condicion" style="display:none;">
-        <label>Descripción del estado</label>
+        <label>Descripcion del estado</label>
         <textarea name="condicion" rows="2" placeholder="Describe el estado del equipo..."></textarea>
+    </div>
+    <div id="panel-solicitud" style="display:none; grid-column: 1 / -1; background:#e3f2fd; padding:16px; border-radius:8px; margin-top:8px;">
+        <strong style="color:#1565c0;">Se creara una solicitud automatica</strong>
+        <p style="font-size:12px; color:#666; margin:6px 0 12px 0;">El sistema enviara una solicitud de mantencion/reposicion con estos datos:</p>
+        <div class="campo">
+            <label>Producto</label>
+            <input type="text" id="sol-producto" readonly style="background:#fff;">
+        </div>
+        <div class="campo">
+            <label>Marca</label>
+            <input type="text" id="sol-marca" readonly style="background:#fff;">
+        </div>
+        <div class="campo">
+            <label>Modelo</label>
+            <input type="text" id="sol-modelo" readonly style="background:#fff;">
+        </div>
+        <div class="campo" style="grid-column: 1 / -1;">
+            <label>Descripcion</label>
+            <textarea id="sol-descripcion" rows="2" readonly style="background:#fff;"></textarea>
+        </div>
     </div>
     <div class="campo">
         <label>Ubicación *</label>
@@ -100,7 +120,24 @@
 <script>
 document.getElementById('sel-estado')?.addEventListener('change', function() {
     var c = document.getElementById('campo-condicion');
-    c.style.display = (this.value === 'regular' || this.value === 'malo') ? 'block' : 'none';
+    var p = document.getElementById('panel-solicitud');
+    var val = this.value;
+    c.style.display = (val === 'regular' || val === 'malo') ? 'block' : 'none';
+    p.style.display = (val === 'regular' || val === 'malo') ? 'grid' : 'none';
+
+    if (val === 'regular' || val === 'malo') {
+        var tipo = val === 'regular' ? 'Mantencion' : 'Reposicion';
+        var cat = document.querySelector('input[name="categoria"]').value || '';
+        var mar = document.querySelector('input[name="marca"]').value || '';
+        var mod = document.querySelector('input[name="modelo"]').value || '';
+        var cod = document.querySelector('input[name="codigo"]').value || '';
+        var ubi = document.querySelector('input[name="ubicacion"]').value || '';
+
+        document.getElementById('sol-producto').value = tipo + ' - ' + cat + ' ' + mar + ' ' + mod;
+        document.getElementById('sol-marca').value = mar;
+        document.getElementById('sol-modelo').value = mod;
+        document.getElementById('sol-descripcion').value = 'Solicitud automatica desde Inventario.\nEquipo: ' + cod + '\nEstado: ' + val + '\nUbicacion: ' + ubi;
+    }
 });
 </script>
 {% endblock %}
