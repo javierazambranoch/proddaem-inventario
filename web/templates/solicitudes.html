@@ -19,12 +19,12 @@
 {% if not es_daem %}
 <form method="POST" action="{{ url_for('sol_enviar') }}" class="formulario">
     <div class="campo">
-        <label>Producto *</label>
-        <input type="text" name="producto" required placeholder="Ej: Computador de escritorio">
+        <label>Marca *</label>
+        <input type="text" name="marca" required placeholder="Ej: Dell, HP, Lenovo...">
     </div>
     <div class="campo">
-        <label>Categoría *</label>
-        <input type="text" name="categoria" required placeholder="Ej: Computador, Monitor, Tablet...">
+        <label>Modelo *</label>
+        <input type="text" name="modelo" required placeholder="Ej: OptiPlex 7090">
     </div>
     <div class="campo">
         <label>Cantidad *</label>
@@ -56,8 +56,8 @@
     <thead>
         <tr>
             <th>N°</th>
-            <th>Producto</th>
-            <th>Categoría</th>
+            <th>Marca</th>
+            <th>Modelo</th>
             <th>Cantidad</th>
             <th>Prioridad</th>
             <th>Estado</th>

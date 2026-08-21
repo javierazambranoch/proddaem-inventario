@@ -382,15 +382,15 @@ def sol_enviar():
     id_usuario = session["id_usuario"]
     id_est = session["id_establecimiento"]
 
-    categoria = request.form.get("categoria", "").strip()
-    producto = request.form.get("producto", "").strip()
+    marca = request.form.get("marca", "").strip()
+    modelo = request.form.get("modelo", "").strip()
     cantidad = request.form.get("cantidad", "").strip()
     prioridad = request.form.get("prioridad", "media").strip()
     caracteristicas = request.form.get("caracteristicas", "").strip()
     descripcion = request.form.get("descripcion", "").strip()
 
-    if not producto or not cantidad or not descripcion or not categoria:
-        flash("Producto, categoría, cantidad y descripción son obligatorios.", "warning")
+    if not marca or not modelo or not cantidad or not descripcion:
+        flash("Marca, modelo, cantidad y descripción son obligatorios.", "warning")
         return redirect(url_for("solicitudes"))
 
     try:
@@ -409,14 +409,14 @@ def sol_enviar():
             (nombre_producto, nro_serie, cantidad, caracteristicas,
              estado, descripcion, prioridad, id_usuario, id_establecimiento)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-            (producto, categoria, cantidad_num,
+            (marca, modelo, cantidad_num,
              caracteristicas if caracteristicas else None,
              "pendiente", descripcion, prioridad, id_usuario, id_est)
         )
         conn.commit()
         conn.close()
 
-        registrar_historial(id_usuario, f"Envío de solicitud: '{producto}' (cantidad: {cantidad_num})")
+        registrar_historial(id_usuario, f"Envío de solicitud: '{marca} {modelo}' (cantidad: {cantidad_num})")
         flash("Solicitud enviada correctamente.", "success")
 
     except Exception as e:
