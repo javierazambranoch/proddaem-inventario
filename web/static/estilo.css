@@ -28,6 +28,16 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .alerta-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
 .alerta-danger { background: #fce4ec; color: #c62828; border: 1px solid #ef9a9a; }
 .alerta-warning { background: #fff8e1; color: #f57f17; border: 1px solid #ffecb3; }
+.alerta-info { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+.alerta-info a { color: #1565c0; font-weight: 600; }
+
+.notificaciones { margin-top: 20px; }
+.notificaciones h3 { font-size: 16px; color: #333; margin-bottom: 12px; }
+.notificaciones ul { list-style: none; }
+.notificaciones li { padding: 10px 14px; border-bottom: 1px solid #eee; font-size: 13px; line-height: 1.5; }
+.notificaciones li:last-child { border-bottom: none; }
+.notif-usuario { font-weight: 600; color: #1565c0; }
+.notif-fecha { display: block; font-size: 11px; color: #999; margin-top: 2px; }
 
 .buscador { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .buscador input, .buscador select { padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }

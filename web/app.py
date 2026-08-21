@@ -1,7 +1,7 @@
 import hashlib
 import os
 import psycopg2
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import (
     Flask, render_template, request,
     redirect, url_for, session, flash
@@ -15,6 +15,11 @@ ESTABLECIMIENTOS = {
     "Escuela Oscar Guerrero": 3,
     "Liceo Municipal": 4,
     "Escuela Canada": 2
+}
+
+NOMBRES_DISPLAY = {
+    "admin_liceo": "Victor Pinto",
+    "admin_saber": "Victor Pinto"
 }
 
 
@@ -80,6 +85,7 @@ def login():
                 session["usuario"] = nombre
                 session["id_usuario"] = resultado[0]
                 session["id_establecimiento"] = resultado[1]
+                session["nombre_display"] = NOMBRES_DISPLAY.get(nombre, nombre)
                 registrar_historial(resultado[0], "Inicio de sesión")
                 return redirect(url_for("dashboard"))
             else:
@@ -101,9 +107,44 @@ def logout():
 def dashboard():
     if not login_requerido():
         return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+    nombre_display = session.get("nombre_display", session["usuario"])
+    notificaciones = []
+    solicitudes_pendientes = 0
+
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+
+        if not es_daem:
+            id_est = session["id_establecimiento"]
+
+            cur.execute(
+                "SELECT COUNT(*) FROM solicitud WHERE id_establecimiento = %s AND estado = 'pendiente'",
+                (id_est,)
+            )
+            solicitudes_pendientes = cur.fetchone()[0]
+
+            cur.execute(
+                "SELECT h.accion, h.fecha_hora, u.nombre_usuario "
+                "FROM Historial h JOIN Usuario u ON h.id_usuario = u.id_usuario "
+                "WHERE u.id_establecimiento = %s "
+                "ORDER BY h.fecha_hora DESC LIMIT 10",
+                (id_est,)
+            )
+            notificaciones = cur.fetchall()
+
+        conn.close()
+    except Exception as e:
+        print("ERROR NOTIFICACIONES:", e)
+
     return render_template("dashboard.html",
                            usuario=session["usuario"],
-                           es_daem=session["usuario"].lower() == "admin_daem")
+                           nombre_display=nombre_display,
+                           es_daem=es_daem,
+                           notificaciones=notificaciones,
+                           solicitudes_pendientes=solicitudes_pendientes)
 
 
 @app.route("/inventario", methods=["GET", "POST"])
