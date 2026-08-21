@@ -9,7 +9,16 @@
     Tiene <strong>{{ solicitudes_pendientes }}</strong> solicitud(es) pendiente(s).
     <a href="{{ url_for('solicitudes') }}">Ver solicitudes</a>
 </div>
-{% else %}
-<p style="color:#888;">No hay solicitudes pendientes.</p>
+{% endif %}
+
+{% if mensajes_nuevos > 0 %}
+<div class="alerta alerta-info">
+    Tiene <strong>{{ mensajes_nuevos }}</strong> mensaje(s) nuevo(s) en el chat.
+    <a href="{{ url_for('chat') }}">Ver chat</a>
+</div>
+{% endif %}
+
+{% if solicitudes_pendientes == 0 and mensajes_nuevos == 0 %}
+<p style="color:#888;">No hay notificaciones nuevas.</p>
 {% endif %}
 {% endblock %}

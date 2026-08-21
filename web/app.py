@@ -132,18 +132,40 @@ def dashboard():
     es_daem = session["usuario"].lower() == "admin_daem"
     nombre_display = session.get("nombre_display", session["usuario"])
     solicitudes_pendientes = 0
+    mensajes_nuevos = 0
 
     try:
         conn = obtener_conexion()
         cur = conn.cursor()
 
-        if not es_daem:
-            id_est = session["id_establecimiento"]
-            cur.execute(
-                "SELECT COUNT(*) FROM solicitud WHERE id_establecimiento = %s AND estado = 'pendiente'",
-                (id_est,)
-            )
-            solicitudes_pendientes = cur.fetchone()[0]
+        id_est = session["id_establecimiento"]
+        cur.execute(
+            "SELECT COUNT(*) FROM solicitud WHERE id_establecimiento = %s AND estado = 'pendiente'",
+            (id_est,)
+        )
+        solicitudes_pendientes = cur.fetchone()[0]
+
+        ultimo_visita = session.get("chat_ultimo_visita")
+        if es_daem:
+            if ultimo_visita:
+                cur.execute("SELECT COUNT(*) FROM Mensaje WHERE fecha_hora > %s", (ultimo_visita,))
+            else:
+                cur.execute("SELECT COUNT(*) FROM Mensaje")
+        else:
+            if ultimo_visita:
+                cur.execute(
+                    "SELECT COUNT(*) FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
+                    "WHERE (u.id_establecimiento = %s OR u.nombre_usuario = 'admin_daem') "
+                    "AND m.fecha_hora > %s",
+                    (id_est, ultimo_visita)
+                )
+            else:
+                cur.execute(
+                    "SELECT COUNT(*) FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
+                    "WHERE u.id_establecimiento = %s OR u.nombre_usuario = 'admin_daem'",
+                    (id_est,)
+                )
+        mensajes_nuevos = cur.fetchone()[0]
 
         conn.close()
     except Exception as e:
@@ -153,7 +175,8 @@ def dashboard():
                            usuario=session["usuario"],
                            nombre_display=nombre_display,
                            es_daem=es_daem,
-                           solicitudes_pendientes=solicitudes_pendientes)
+                           solicitudes_pendientes=solicitudes_pendientes,
+                           mensajes_nuevos=mensajes_nuevos)
 
 
 @app.route("/inventario", methods=["GET", "POST"])
@@ -502,6 +525,8 @@ def chat():
     id_usuario = session["id_usuario"]
     id_est = session["id_establecimiento"]
     nombre_display = session.get("nombre_display", session["usuario"])
+
+    session["chat_ultimo_visita"] = datetime.now()
 
     if request.method == "POST":
         mensaje = request.form.get("mensaje", "").strip()
