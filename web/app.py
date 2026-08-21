@@ -51,6 +51,27 @@ def login_requerido():
     return "usuario" in session
 
 
+def crear_tabla_mensajes():
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS Mensaje (
+                id_mensaje SERIAL PRIMARY KEY,
+                id_usuario INTEGER NOT NULL,
+                mensaje TEXT NOT NULL,
+                fecha_hora TIMESTAMP DEFAULT NOW()
+            )
+        """)
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print("ERROR CREAR TABLA MENSAJE:", e)
+
+
+crear_tabla_mensajes()
+
+
 @app.route("/")
 def index():
     if login_requerido():
@@ -469,7 +490,63 @@ def sol_cambiar_estado(id_solicitud):
 
     if not nuevo_estado:
         flash("Selecciona un estado.", "warning")
-        return redirect(url_for("solicitudes", establecimiento=est_filtro))
+    return redirect(url_for("solicitudes", establecimiento=est_filtro))
+
+
+@app.route("/chat", methods=["GET", "POST"])
+def chat():
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+    id_usuario = session["id_usuario"]
+    id_est = session["id_establecimiento"]
+    nombre_display = session.get("nombre_display", session["usuario"])
+
+    if request.method == "POST":
+        mensaje = request.form.get("mensaje", "").strip()
+        if mensaje:
+            try:
+                conn = obtener_conexion()
+                cur = conn.cursor()
+                cur.execute(
+                    "INSERT INTO Mensaje (id_usuario, mensaje, fecha_hora) VALUES (%s, %s, %s)",
+                    (id_usuario, mensaje, datetime.now())
+                )
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                flash(f"Error al enviar mensaje: {e}", "danger")
+        return redirect(url_for("chat"))
+
+    mensajes = []
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        if es_daem:
+            cur.execute(
+                "SELECT m.mensaje, m.fecha_hora, u.nombre_usuario, u.id_establecimiento "
+                "FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
+                "ORDER BY m.fecha_hora ASC"
+            )
+        else:
+            cur.execute(
+                "SELECT m.mensaje, m.fecha_hora, u.nombre_usuario, u.id_establecimiento "
+                "FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
+                "WHERE u.id_establecimiento = %s OR u.nombre_usuario = 'admin_daem' "
+                "ORDER BY m.fecha_hora ASC",
+                (id_est,)
+            )
+        mensajes = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        flash(f"Error al cargar chat: {e}", "danger")
+
+    return render_template("chat.html",
+                           usuario=session["usuario"],
+                           nombre_display=nombre_display,
+                           es_daem=es_daem,
+                           mensajes=mensajes)
 
     try:
         conn = obtener_conexion()

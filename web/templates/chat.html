@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block titulo %}ProDaem - Chat{% endblock %}
+{% block contenido %}
+<h1>Chat</h1>
+
+<div class="chat-container">
+    <div class="chat-mensajes" id="chat-mensajes">
+        {% for msg, fecha, usr, est in mensajes %}
+        <div class="chat-msg {% if usr == usuario %}chat-mio{% else %}chat-otro{% endif %}">
+            <span class="chat-usuario">{{ usr }}</span>
+            <span class="chat-texto">{{ msg }}</span>
+            <span class="chat-fecha">{{ fecha.strftime('%d/%m/%H:%M') }}</span>
+        </div>
+        {% endfor %}
+        {% if not mensajes %}
+        <p style="color:#999; text-align:center; padding:40px;">No hay mensajes. Escribe el primero.</p>
+        {% endif %}
+    </div>
+    <form method="POST" class="chat-form">
+        <input type="text" name="mensaje" id="chat-input" placeholder="Escribe tu mensaje..." required autocomplete="off">
+        <button type="submit">Enviar</button>
+    </form>
+</div>
+
+<script>
+var c = document.getElementById('chat-mensajes');
+if (c) c.scrollTop = c.scrollHeight;
+</script>
+{% endblock %}
