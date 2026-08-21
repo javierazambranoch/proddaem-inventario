@@ -13,8 +13,9 @@ app.secret_key = os.environ.get("SECRET_KEY", "daem_inventario_2026_prod")
 ESTABLECIMIENTOS = {
     "Escuela El Saber": 9,
     "Escuela Oscar Guerrero": 3,
+    "Escuela Canada": 2,
     "Liceo Municipal": 4,
-    "Escuela Canada": 2
+    "Escuela Toqui Lautaro": 5
 }
 
 NOMBRES_DISPLAY = {
