@@ -8,6 +8,7 @@ dist/
 *.zip
 cloudflared*
 ngrok*
+venv/
 tunnel_output.txt
 web_output.txt
 web_error.txt
