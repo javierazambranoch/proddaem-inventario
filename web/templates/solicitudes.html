@@ -81,15 +81,17 @@
             <td><span class="badge badge-prioridad">{{ s[4] }}</span></td>
             <td>
                 {% if es_daem %}
-                <form method="POST" action="{{ url_for('sol_cambiar_estado', id_solicitud=s[0]) }}" class="inline">
+                <form method="POST" action="{{ url_for('sol_cambiar_estado', id_solicitud=s[0]) }}" class="inline-form-cambio">
                     <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
-                    <select name="nuevo_estado" onchange="this.form.submit()">
+                    <select name="nuevo_estado" class="select-estado">
                         <option value="" disabled selected>{{ s[5] }}</option>
                         <option value="pendiente">Pendiente</option>
                         <option value="en proceso">En proceso</option>
                         <option value="completada">Completada</option>
                         <option value="rechazada">Rechazada</option>
                     </select>
+                    <textarea name="comentario_estado" rows="2" placeholder="Comentario opcional (obligatorio al rechazar)" class="input-comentario"></textarea>
+                    <button type="submit" class="btn-guardar" style="padding:6px 12px; font-size:12px;">Guardar</button>
                 </form>
                 {% else %}
                 <span class="badge badge-{{ s[5] }}">{{ s[5] }}</span>

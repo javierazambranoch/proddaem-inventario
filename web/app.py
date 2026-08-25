@@ -78,6 +78,31 @@ def crear_tabla_mensajes():
 crear_tabla_mensajes()
 
 
+def crear_tabla_eventos():
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS Evento (
+                id_evento SERIAL PRIMARY KEY,
+                titulo VARCHAR(200) NOT NULL,
+                descripcion TEXT DEFAULT '',
+                fecha DATE NOT NULL,
+                hora TIME DEFAULT '08:00',
+                establecimiento VARCHAR(150) NOT NULL,
+                tipo VARCHAR(20) NOT NULL DEFAULT 'agenda',
+                fecha_creacion TIMESTAMP DEFAULT NOW()
+            )
+        """)
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print("ERROR CREAR TABLA EVENTO:", e)
+
+
+crear_tabla_eventos()
+
+
 @app.route("/")
 def index():
     if login_requerido():
@@ -514,11 +539,59 @@ def sol_cambiar_estado(id_solicitud):
     if not login_requerido():
         return redirect(url_for("login"))
 
+    es_daem = session["usuario"].lower() == "admin_daem"
     nuevo_estado = request.form.get("nuevo_estado", "").strip()
+    comentario = request.form.get("comentario_estado", "").strip()
     est_filtro = request.form.get("est_filtro", "0")
 
     if not nuevo_estado:
         flash("Selecciona un estado.", "warning")
+        return redirect(url_for("solicitudes", establecimiento=est_filtro))
+
+    # Rechazada exige motivo obligatorio
+    if nuevo_estado == "rechazada" and len(comentario) < 4:
+        flash("Al rechazar una solicitud debes escribir el motivo como comentario.", "warning")
+        return redirect(url_for("solicitudes", establecimiento=est_filtro))
+
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+
+        # Actualizar estado
+        cur.execute(
+            "UPDATE solicitud SET estado = %s WHERE id_solicitud = %s",
+            (nuevo_estado, id_solicitud)
+        )
+
+        # Si hay comentario, guardarlo como mensaje personalizado al establecimiento
+        if comentario:
+            # Obtener el id_usuario del solicitante para enviar el comentario como chat
+            cur.execute(
+                "SELECT id_usuario, id_establecimiento FROM solicitud WHERE id_solicitud = %s",
+                (id_solicitud,)
+            )
+            sol_data = cur.fetchone()
+            if sol_data:
+                id_autor = session["id_usuario"]
+                texto_msg = f"[Solicitud N°{id_solicitud} → {nuevo_estado.upper()}] {comentario}"
+                cur.execute(
+                    "INSERT INTO Mensaje (id_usuario, mensaje, id_establecimiento_destino, fecha_hora) "
+                    "VALUES (%s, %s, %s, %s)",
+                    (id_autor, texto_msg, sol_data[1], datetime.now())
+                )
+
+        conn.commit()
+        conn.close()
+
+        registrar_historial(
+            session["id_usuario"],
+            f"Cambio estado solicitud N° {id_solicitud} → {nuevo_estado}"
+        )
+        flash(f"Solicitud N° {id_solicitud} actualizada a '{nuevo_estado}'.", "success")
+
+    except Exception as e:
+        flash(f"Error al cambiar estado: {e}", "danger")
+
     return redirect(url_for("solicitudes", establecimiento=est_filtro))
 
 
@@ -602,26 +675,111 @@ def chat():
                            est_filtro=est_filtro,
                            establecimientos=ESTABLECIMIENTOS)
 
+
+@app.route("/calendario", methods=["GET", "POST"])
+def calendario():
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+    id_est = session["id_establecimiento"]
+    nombre_establecimiento = ""
+    eventos = []
+
+    # Obtener nombre del establecimiento del usuario
     try:
         conn = obtener_conexion()
         cur = conn.cursor()
         cur.execute(
-            "UPDATE solicitud SET estado = %s WHERE id_solicitud = %s",
-            (nuevo_estado, id_solicitud)
+            "SELECT nombre_establecimiento FROM Establecimiento WHERE id_establecimiento = %s",
+            (id_est,)
         )
+        resultado = cur.fetchone()
+        if resultado:
+            nombre_establecimiento = resultado[0]
+        conn.close()
+    except Exception:
+        pass
+
+    # Crear evento
+    if request.method == "POST":
+        titulo = request.form.get("titulo", "").strip()
+        descripcion = request.form.get("descripcion", "").strip()
+        fecha = request.form.get("fecha", "").strip()
+        hora = request.form.get("hora", "08:00").strip()
+
+        if not titulo or not fecha:
+            flash("Titulo y fecha son obligatorios.", "warning")
+        else:
+            tipo = "daem" if es_daem else "agenda"
+            establecimiento = "DAEM" if es_daem else nombre_establecimiento
+            try:
+                conn = obtener_conexion()
+                cur = conn.cursor()
+                cur.execute(
+                    "INSERT INTO Evento (titulo, descripcion, fecha, hora, establecimiento, tipo) "
+                    "VALUES (%s, %s, %s, %s, %s, %s)",
+                    (titulo, descripcion, fecha, hora, establecimiento, tipo)
+                )
+                conn.commit()
+                conn.close()
+                flash("Evento registrado.", "success")
+            except Exception as e:
+                flash(f"Error al crear evento: {e}", "danger")
+
+    # Cargar eventos: DAEM ve todos; establecimiento ve los suyos + los de DAEM
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        if es_daem:
+            cur.execute(
+                "SELECT id_evento, titulo, descripcion, fecha, hora, establecimiento, tipo "
+                "FROM Evento ORDER BY fecha ASC, hora ASC"
+            )
+        else:
+            cur.execute(
+                "SELECT id_evento, titulo, descripcion, fecha, hora, establecimiento, tipo "
+                "FROM Evento WHERE tipo = 'daem' OR establecimiento = %s "
+                "ORDER BY fecha ASC, hora ASC",
+                (nombre_establecimiento,)
+            )
+        eventos = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        flash(f"Error al cargar eventos: {e}", "danger")
+
+    return render_template("calendario.html",
+                           usuario=session["usuario"],
+                           es_daem=es_daem,
+                           eventos=eventos,
+                           establecimientos=ESTABLECIMIENTOS,
+                           nombre_establecimiento=nombre_establecimiento)
+
+
+@app.route("/calendario/eliminar/<int:id_evento>", methods=["POST"])
+def cal_eliminar(id_evento):
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        if es_daem:
+            cur.execute("DELETE FROM Evento WHERE id_evento = %s", (id_evento,))
+        else:
+            cur.execute(
+                "DELETE FROM Evento WHERE id_evento = %s AND tipo = 'agenda'",
+                (id_evento,)
+            )
         conn.commit()
         conn.close()
-
-        registrar_historial(
-            session["id_usuario"],
-            f"Cambio estado solicitud N° {id_solicitud} -> {nuevo_estado}"
-        )
-        flash(f"Solicitud N° {id_solicitud} -> {nuevo_estado}", "success")
-
+        flash("Evento eliminado.", "success")
     except Exception as e:
-        flash(f"Error al cambiar estado: {e}", "danger")
+        flash(f"Error al eliminar evento: {e}", "danger")
 
-    return redirect(url_for("solicitudes", establecimiento=est_filtro))
+    return redirect(url_for("calendario"))
 
 
 @app.route("/historial")

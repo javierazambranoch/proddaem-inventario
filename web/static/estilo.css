@@ -78,9 +78,16 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .badge-completada { background: #e8f5e9; color: #2e7d32; }
 .badge-rechazada { background: #fce4ec; color: #c62828; }
 .badge-prioridad { background: #e3f2fd; color: #1565c0; }
+.badge-daem { background: #fff3e0; color: #e65100; }
+.badge-agenda { background: #e8f5e9; color: #2e7d32; }
 
 .inline { display: inline; }
 .inline select { padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; cursor: pointer; }
+
+.inline-form-cambio { display: flex; flex-direction: column; gap: 6px; }
+.inline-form-cambio .select-estado { padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+.inline-form-cambio .input-comentario { padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; resize: vertical; min-height: 36px; }
+
 .btn-eliminar { background: none; border: none; color: #c62828; cursor: pointer; font-size: 16px; padding: 4px 8px; }
 .btn-eliminar:hover { background: #fce4ec; border-radius: 4px; }
 
