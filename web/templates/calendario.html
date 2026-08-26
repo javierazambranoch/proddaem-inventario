@@ -1,30 +1,44 @@
 {% extends "base.html" %}
 {% block titulo %}ProDaem - Calendario{% endblock %}
 {% block contenido %}
-<h1>Calendario</h1>
+<h1>Calendario de Eventos</h1>
 
 {% if es_daem %}
+<p style="color:#666; margin-bottom:16px;">Como DAEM, puedes publicar fechas visibles para todos los establecimientos o guardar eventos solo en tu agenda.</p>
 <form method="POST" class="formulario">
     <div class="campo">
-        <label>Titulo *</label>
-        <input type="text" name="titulo" required placeholder="Ej: Reunion de apoderados">
+        <label>Titulo del evento *</label>
+        <input type="text" name="titulo" required placeholder="Ej: Reunion de apoderados, Feriado...">
     </div>
     <div class="campo">
         <label>Fecha *</label>
         <input type="date" name="fecha" required>
     </div>
     <div class="campo">
+        <label>Hora</label>
+        <input type="time" name="hora">
+    </div>
+    <div class="campo">
         <label>Visible para</label>
-        <select name="para_todos">
-            <option value="1">Todos</option>
-            <option value="0">Solo yo</option>
+        <select name="para_todos" id="sel-para-todos">
+            <option value="1">Todos los establecimientos</option>
+            <option value="0">Agenda propia</option>
+        </select>
+    </div>
+    <div class="campo" id="campo-destino">
+        <label>Establecimiento destino</label>
+        <select name="destino">
+            <option value="0">Todos</option>
+            {% for nombre, id in establecimientos.items() %}
+            <option value="{{ id }}">{{ nombre }}</option>
+            {% endfor %}
         </select>
     </div>
     <div class="campo" style="grid-column: 1 / -1;">
         <label>Descripcion</label>
-        <textarea name="descripcion" rows="2" placeholder="Detalle del evento..."></textarea>
+        <textarea name="descripcion" rows="2" placeholder="Detalle opcional del evento..."></textarea>
     </div>
-    <button type="submit" class="btn-guardar">Crear Evento</button>
+    <button type="submit" class="btn-guardar">Publicar evento</button>
 </form>
 {% endif %}
 
@@ -33,9 +47,10 @@
     <thead>
         <tr>
             <th>Fecha</th>
-            <th>Titulo</th>
-            <th>Descripcion</th>
-            <th>Visible</th>
+            <th>Hora</th>
+            <th>Evento</th>
+            <th>Establecimiento</th>
+            <th>Tipo</th>
             {% if es_daem %}<th></th>{% endif %}
         </tr>
     </thead>
@@ -43,15 +58,28 @@
         {% for ev in eventos %}
         <tr>
             <td>{{ ev[3].strftime('%d/%m/%Y') }}</td>
-            <td>{{ ev[1] }}</td>
-            <td>{{ ev[2] if ev[2] else '-' }}</td>
-            <td>{% if ev[4] %}Todos{% else %}Solo yo{% endif %}</td>
+            <td>{{ ev[4] if ev[4] else '-' }}</td>
+            <td>{{ ev[1] }}{% if ev[2] %}<br><small style="color:#888;">{{ ev[2] }}</small>{% endif %}</td>
+            <td>
+                {% if ev[6] %}
+                    {% for nombre, id in establecimientos.items() %}
+                        {% if id == ev[6] %}{{ nombre }}{% endif %}
+                    {% endfor %}
+                {% else %}
+                    DAEM
+                {% endif %}
+            </td>
+            <td>
+                {% if ev[5] %}
+                    {% if ev[6] %}DAEM - Todos{% else %}DAEM - Todos{% endif %}
+                {% else %}
+                    Agenda propia
+                {% endif %}
+            </td>
             {% if es_daem %}
-            <td style="white-space:nowrap;">
-                <button type="button" class="btn-editar" title="Editar"
-                        onclick="abrirEditar({{ ev[0] }}, '{{ ev[1] }}', '{{ ev[2] if ev[2] else '' }}', '{{ ev[3].strftime('%Y-%m-%d') }}', {{ 'true' if ev[4] else 'false' }})">&#9998;</button>
+            <td>
                 <form method="POST" action="{{ url_for('eliminar_evento', id_evento=ev[0]) }}" class="inline"
-                      onsubmit="return confirm('Eliminar evento?')" style="display:inline;">
+                      onsubmit="return confirm('Eliminar evento?')">
                     <button type="submit" class="btn-eliminar" title="Eliminar">&#10005;</button>
                 </form>
             </td>
@@ -59,57 +87,17 @@
         </tr>
         {% endfor %}
         {% if not eventos %}
-        <tr><td colspan="5" class="vacio">No hay eventos.</td></tr>
+        <tr><td colspan="6" class="vacio">No hay eventos.</td></tr>
         {% endif %}
     </tbody>
 </table>
 </div>
 
 {% if es_daem %}
-<div id="modal-editar" class="modal" style="display:none;">
-    <div class="modal-contenido">
-        <h3>Editar Evento</h3>
-        <form method="POST" action="" id="form-editar">
-            <input type="hidden" name="id_evento" id="edit-id">
-            <div class="campo">
-                <label>Titulo *</label>
-                <input type="text" name="titulo" id="edit-titulo" required>
-            </div>
-            <div class="campo">
-                <label>Fecha *</label>
-                <input type="date" name="fecha" id="edit-fecha" required>
-            </div>
-            <div class="campo">
-                <label>Visible para</label>
-                <select name="para_todos" id="edit-para_todos">
-                    <option value="1">Todos</option>
-                    <option value="0">Solo yo</option>
-                </select>
-            </div>
-            <div class="campo">
-                <label>Descripcion</label>
-                <textarea name="descripcion" id="edit-descripcion" rows="2"></textarea>
-            </div>
-            <div style="display:flex; gap:10px; margin-top:12px;">
-                <button type="submit" class="btn-guardar">Guardar</button>
-                <button type="button" class="btn-cancelar" onclick="cerrarEditar()">Cancelar</button>
-            </div>
-        </form>
-    </div>
-</div>
-{% endif %}
-
 <script>
-function abrirEditar(id, titulo, desc, fecha, paraTodos) {
-    document.getElementById('form-editar').action = '/calendario/editar/' + id;
-    document.getElementById('edit-titulo').value = titulo;
-    document.getElementById('edit-descripcion').value = desc;
-    document.getElementById('edit-fecha').value = fecha;
-    document.getElementById('edit-para_todos').value = paraTodos ? '1' : '0';
-    document.getElementById('modal-editar').style.display = 'flex';
-}
-function cerrarEditar() {
-    document.getElementById('modal-editar').style.display = 'none';
-}
+document.getElementById('sel-para-todos')?.addEventListener('change', function() {
+    document.getElementById('campo-destino').style.display = this.value === '1' ? 'flex' : 'none';
+});
 </script>
+{% endif %}
 {% endblock %}

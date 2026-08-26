@@ -200,7 +200,7 @@ def dashboard():
         mensajes_nuevos = cur.fetchone()[0]
 
         cur.execute(
-            "SELECT titulo, descripcion, fecha FROM Evento "
+            "SELECT titulo, descripcion, fecha, hora FROM Evento "
             "WHERE fecha >= CURRENT_DATE AND visible_para_todos = TRUE "
             "ORDER BY fecha ASC LIMIT 5"
         )
@@ -930,16 +930,19 @@ def calendario():
         titulo = request.form.get("titulo", "").strip()
         descripcion = request.form.get("descripcion", "").strip()
         fecha = request.form.get("fecha", "").strip()
+        hora = request.form.get("hora", "").strip()
         para_todos = request.form.get("para_todos", "1") == "1"
+        destino = request.form.get("destino", "0").strip()
 
         if titulo and fecha:
             try:
                 conn = obtener_conexion()
                 cur = conn.cursor()
+                dest_val = int(destino) if destino != "0" else None
                 cur.execute(
-                    "INSERT INTO Evento (titulo, descripcion, fecha, id_usuario_creador, visible_para_todos) "
-                    "VALUES (%s, %s, %s, %s, %s)",
-                    (titulo, descripcion, fecha, session["id_usuario"], para_todos)
+                    "INSERT INTO Evento (titulo, descripcion, fecha, hora, id_usuario_creador, visible_para_todos, id_establecimiento_destino) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    (titulo, descripcion, fecha, hora if hora else None, session["id_usuario"], para_todos, dest_val)
                 )
                 conn.commit()
                 conn.close()
@@ -954,14 +957,16 @@ def calendario():
         cur = conn.cursor()
         if es_daem:
             cur.execute(
-                "SELECT id_evento, titulo, descripcion, fecha, visible_para_todos FROM Evento "
-                "WHERE id_usuario_creador = %s ORDER BY fecha DESC",
+                "SELECT e.id_evento, e.titulo, e.descripcion, e.fecha, e.hora, "
+                "e.visible_para_todos, e.id_establecimiento_destino "
+                "FROM Evento e WHERE e.id_usuario_creador = %s ORDER BY e.fecha DESC",
                 (session["id_usuario"],)
             )
         else:
             cur.execute(
-                "SELECT id_evento, titulo, descripcion, fecha, visible_para_todos FROM Evento "
-                "WHERE visible_para_todos = TRUE ORDER BY fecha DESC"
+                "SELECT e.id_evento, e.titulo, e.descripcion, e.fecha, e.hora, "
+                "e.visible_para_todos, e.id_establecimiento_destino "
+                "FROM Evento e WHERE e.visible_para_todos = TRUE ORDER BY e.fecha DESC"
             )
         eventos = cur.fetchall()
         conn.close()
@@ -971,7 +976,8 @@ def calendario():
     return render_template("calendario.html",
                            usuario=session["usuario"],
                            es_daem=es_daem,
-                           eventos=eventos)
+                           eventos=eventos,
+                           establecimientos=ESTABLECIMIENTOS)
 
 
 @app.route("/calendario/eliminar/<int:id_evento>", methods=["POST"])
@@ -1008,16 +1014,20 @@ def editar_evento(id_evento):
     titulo = request.form.get("titulo", "").strip()
     descripcion = request.form.get("descripcion", "").strip()
     fecha = request.form.get("fecha", "").strip()
+    hora = request.form.get("hora", "").strip()
     para_todos = request.form.get("para_todos", "1") == "1"
+    destino = request.form.get("destino", "0").strip()
 
     if titulo and fecha:
         try:
             conn = obtener_conexion()
             cur = conn.cursor()
+            dest_val = int(destino) if destino != "0" else None
             cur.execute(
-                "UPDATE Evento SET titulo=%s, descripcion=%s, fecha=%s, visible_para_todos=%s "
+                "UPDATE Evento SET titulo=%s, descripcion=%s, fecha=%s, hora=%s, "
+                "visible_para_todos=%s, id_establecimiento_destino=%s "
                 "WHERE id_evento=%s AND id_usuario_creador=%s",
-                (titulo, descripcion, fecha, para_todos, id_evento, session["id_usuario"])
+                (titulo, descripcion, fecha, hora if hora else None, para_todos, dest_val, id_evento, session["id_usuario"])
             )
             conn.commit()
             conn.close()

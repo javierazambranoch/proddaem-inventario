@@ -26,8 +26,8 @@
 <div class="alerta alerta-warning">
     <strong>Proximos eventos:</strong>
     <ul style="margin:6px 0 0 16px;">
-        {% for titulo, desc, fecha in proximos_eventos %}
-        <li><strong>{{ titulo }}</strong> - {{ fecha.strftime('%d/%m/%Y') }}{% if desc %}: {{ desc }}{% endif %}</li>
+        {% for titulo, desc, fecha, hora in proximos_eventos %}
+        <li><strong>{{ titulo }}</strong> - {{ fecha.strftime('%d/%m/%Y') }}{% if hora %} {{ hora }}{% endif %}{% if desc %}: {{ desc }}{% endif %}</li>
         {% endfor %}
     </ul>
     <a href="{{ url_for('calendario') }}">Ver calendario</a>
