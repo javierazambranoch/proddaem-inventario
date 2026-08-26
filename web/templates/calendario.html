@@ -13,6 +13,13 @@
         <label>Fecha *</label>
         <input type="date" name="fecha" required>
     </div>
+    <div class="campo">
+        <label>Visible para</label>
+        <select name="para_todos">
+            <option value="1">Todos</option>
+            <option value="0">Solo yo</option>
+        </select>
+    </div>
     <div class="campo" style="grid-column: 1 / -1;">
         <label>Descripcion</label>
         <textarea name="descripcion" rows="2" placeholder="Detalle del evento..."></textarea>
@@ -28,6 +35,7 @@
             <th>Fecha</th>
             <th>Titulo</th>
             <th>Descripcion</th>
+            <th>Visible</th>
             {% if es_daem %}<th></th>{% endif %}
         </tr>
     </thead>
@@ -37,6 +45,7 @@
             <td>{{ ev[3].strftime('%d/%m/%Y') }}</td>
             <td>{{ ev[1] }}</td>
             <td>{{ ev[2] if ev[2] else '-' }}</td>
+            <td>{% if ev[4] %}Todos{% else %}Solo yo{% endif %}</td>
             {% if es_daem %}
             <td>
                 <form method="POST" action="{{ url_for('eliminar_evento', id_evento=ev[0]) }}" class="inline"
@@ -48,7 +57,7 @@
         </tr>
         {% endfor %}
         {% if not eventos %}
-        <tr><td colspan="4" class="vacio">No hay eventos.</td></tr>
+        <tr><td colspan="5" class="vacio">No hay eventos.</td></tr>
         {% endif %}
     </tbody>
 </table>

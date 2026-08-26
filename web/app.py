@@ -201,7 +201,8 @@ def dashboard():
 
         cur.execute(
             "SELECT titulo, descripcion, fecha FROM Evento "
-            "WHERE fecha >= CURRENT_DATE ORDER BY fecha ASC LIMIT 5"
+            "WHERE fecha >= CURRENT_DATE AND visible_para_todos = TRUE "
+            "ORDER BY fecha ASC LIMIT 5"
         )
         proximos_eventos = cur.fetchall()
 
@@ -929,15 +930,16 @@ def calendario():
         titulo = request.form.get("titulo", "").strip()
         descripcion = request.form.get("descripcion", "").strip()
         fecha = request.form.get("fecha", "").strip()
+        para_todos = request.form.get("para_todos", "1") == "1"
 
         if titulo and fecha:
             try:
                 conn = obtener_conexion()
                 cur = conn.cursor()
                 cur.execute(
-                    "INSERT INTO Evento (titulo, descripcion, fecha, id_usuario_creador) "
-                    "VALUES (%s, %s, %s, %s)",
-                    (titulo, descripcion, fecha, session["id_usuario"])
+                    "INSERT INTO Evento (titulo, descripcion, fecha, id_usuario_creador, visible_para_todos) "
+                    "VALUES (%s, %s, %s, %s, %s)",
+                    (titulo, descripcion, fecha, session["id_usuario"], para_todos)
                 )
                 conn.commit()
                 conn.close()
@@ -950,9 +952,15 @@ def calendario():
     try:
         conn = obtener_conexion()
         cur = conn.cursor()
-        cur.execute(
-            "SELECT id_evento, titulo, descripcion, fecha FROM Evento ORDER BY fecha DESC"
-        )
+        if es_daem:
+            cur.execute(
+                "SELECT id_evento, titulo, descripcion, fecha, visible_para_todos FROM Evento ORDER BY fecha DESC"
+            )
+        else:
+            cur.execute(
+                "SELECT id_evento, titulo, descripcion, fecha, visible_para_todos FROM Evento "
+                "WHERE visible_para_todos = TRUE ORDER BY fecha DESC"
+            )
         eventos = cur.fetchall()
         conn.close()
     except Exception as e:
