@@ -911,5 +911,61 @@ def encargados():
                            establecimientos=ESTABLECIMIENTOS)
 
 
+@app.route("/crear_perfil", methods=["GET", "POST"])
+def crear_perfil():
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+    if not es_daem:
+        return redirect(url_for("dashboard"))
+
+    if request.method == "POST":
+        nombre_est = request.form.get("nombre_establecimiento", "").strip()
+        nombre_usuario = request.form.get("nombre_usuario", "").strip()
+        clave = request.form.get("clave", "").strip()
+        nombre_encargado = request.form.get("nombre_encargado", "").strip()
+
+        if not nombre_est or not nombre_usuario or not clave:
+            flash("Nombre del establecimiento, usuario y clave son obligatorios.", "warning")
+            return redirect(url_for("crear_perfil"))
+
+        try:
+            conn = obtener_conexion()
+            cur = conn.cursor()
+
+            cur.execute(
+                "INSERT INTO Establecimiento (nombre) VALUES (%s) RETURNING id_establecimiento",
+                (nombre_est,)
+            )
+            id_nuevo = cur.fetchone()[0]
+
+            clave_hash = hashlib.sha256(clave.encode()).hexdigest()
+            cur.execute(
+                "INSERT INTO Usuario (nombre_usuario, clave_hash, id_establecimiento) VALUES (%s, %s, %s)",
+                (nombre_usuario, clave_hash, id_nuevo)
+            )
+
+            if nombre_encargado:
+                cur.execute(
+                    "INSERT INTO Encargado (id_establecimiento, nombre, cargo) VALUES (%s, %s, 'Encargado')",
+                    (id_nuevo, nombre_encargado)
+                )
+
+            conn.commit()
+            conn.close()
+
+            ESTABLECIMIENTOS[nombre_est] = id_nuevo
+            flash(f"Establecimiento '{nombre_est}' creado. Usuario: {nombre_usuario}", "success")
+
+        except Exception as e:
+            flash(f"Error: {e}", "danger")
+
+        return redirect(url_for("crear_perfil"))
+
+    return render_template("crear_perfil.html",
+                           usuario=session["usuario"])
+
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)

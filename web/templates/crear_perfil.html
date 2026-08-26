@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}ProDaem - Crear Perfil{% endblock %}
+{% block contenido %}
+<h1>Crear Perfil de Establecimiento</h1>
+<p style="color:#666; margin-bottom:20px;">Crea un nuevo establecimiento con su usuario administrador y encargado.</p>
+
+<form method="POST" class="formulario">
+    <div class="campo">
+        <label>Nombre del Establecimiento *</label>
+        <input type="text" name="nombre_establecimiento" required placeholder="Ej: Escuela Los Andes">
+    </div>
+    <div class="campo">
+        <label>Usuario administrador *</label>
+        <input type="text" name="nombre_usuario" required placeholder="Ej: admin_andes">
+    </div>
+    <div class="campo">
+        <label>Clave *</label>
+        <input type="password" name="clave" required placeholder="Clave de acceso">
+    </div>
+    <div class="campo">
+        <label>Nombre del Encargado</label>
+        <input type="text" name="nombre_encargado" placeholder="Ej: Maria Perez">
+    </div>
+    <button type="submit" class="btn-guardar">Crear Establecimiento</button>
+</form>
+{% endblock %}

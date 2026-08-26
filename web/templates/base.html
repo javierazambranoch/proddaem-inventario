@@ -21,6 +21,7 @@
             <a href="{{ url_for('chat') }}" class="{% if request.endpoint == 'chat' %}activo{% endif %}">Chat</a>
             {% if session.usuario == 'admin_daem' %}
             <a href="{{ url_for('encargados') }}" class="{% if request.endpoint == 'encargados' %}activo{% endif %}">Encargados</a>
+            <a href="{{ url_for('crear_perfil') }}" class="{% if request.endpoint == 'crear_perfil' %}activo{% endif %}">Crear Perfil</a>
             {% endif %}
         </nav>
         <a href="{{ url_for('logout') }}" class="btn-salir">Cerrar sesión</a>
