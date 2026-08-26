@@ -47,9 +47,11 @@
             <td>{{ ev[2] if ev[2] else '-' }}</td>
             <td>{% if ev[4] %}Todos{% else %}Solo yo{% endif %}</td>
             {% if es_daem %}
-            <td>
+            <td style="white-space:nowrap;">
+                <button type="button" class="btn-editar" title="Editar"
+                        onclick="abrirEditar({{ ev[0] }}, '{{ ev[1] }}', '{{ ev[2] if ev[2] else '' }}', '{{ ev[3].strftime('%Y-%m-%d') }}', {{ 'true' if ev[4] else 'false' }})">&#9998;</button>
                 <form method="POST" action="{{ url_for('eliminar_evento', id_evento=ev[0]) }}" class="inline"
-                      onsubmit="return confirm('Eliminar evento?')">
+                      onsubmit="return confirm('Eliminar evento?')" style="display:inline;">
                     <button type="submit" class="btn-eliminar" title="Eliminar">&#10005;</button>
                 </form>
             </td>
@@ -62,4 +64,52 @@
     </tbody>
 </table>
 </div>
+
+{% if es_daem %}
+<div id="modal-editar" class="modal" style="display:none;">
+    <div class="modal-contenido">
+        <h3>Editar Evento</h3>
+        <form method="POST" action="" id="form-editar">
+            <input type="hidden" name="id_evento" id="edit-id">
+            <div class="campo">
+                <label>Titulo *</label>
+                <input type="text" name="titulo" id="edit-titulo" required>
+            </div>
+            <div class="campo">
+                <label>Fecha *</label>
+                <input type="date" name="fecha" id="edit-fecha" required>
+            </div>
+            <div class="campo">
+                <label>Visible para</label>
+                <select name="para_todos" id="edit-para_todos">
+                    <option value="1">Todos</option>
+                    <option value="0">Solo yo</option>
+                </select>
+            </div>
+            <div class="campo">
+                <label>Descripcion</label>
+                <textarea name="descripcion" id="edit-descripcion" rows="2"></textarea>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:12px;">
+                <button type="submit" class="btn-guardar">Guardar</button>
+                <button type="button" class="btn-cancelar" onclick="cerrarEditar()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function abrirEditar(id, titulo, desc, fecha, paraTodos) {
+    document.getElementById('form-editar').action = '/calendario/editar/' + id;
+    document.getElementById('edit-titulo').value = titulo;
+    document.getElementById('edit-descripcion').value = desc;
+    document.getElementById('edit-fecha').value = fecha;
+    document.getElementById('edit-para_todos').value = paraTodos ? '1' : '0';
+    document.getElementById('modal-editar').style.display = 'flex';
+}
+function cerrarEditar() {
+    document.getElementById('modal-editar').style.display = 'none';
+}
+</script>
 {% endblock %}

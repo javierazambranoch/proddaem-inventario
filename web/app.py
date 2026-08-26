@@ -996,6 +996,40 @@ def eliminar_evento(id_evento):
     return redirect(url_for("calendario"))
 
 
+@app.route("/calendario/editar/<int:id_evento>", methods=["POST"])
+def editar_evento(id_evento):
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+    if not es_daem:
+        return redirect(url_for("dashboard"))
+
+    titulo = request.form.get("titulo", "").strip()
+    descripcion = request.form.get("descripcion", "").strip()
+    fecha = request.form.get("fecha", "").strip()
+    para_todos = request.form.get("para_todos", "1") == "1"
+
+    if titulo and fecha:
+        try:
+            conn = obtener_conexion()
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE Evento SET titulo=%s, descripcion=%s, fecha=%s, visible_para_todos=%s "
+                "WHERE id_evento=%s AND id_usuario_creador=%s",
+                (titulo, descripcion, fecha, para_todos, id_evento, session["id_usuario"])
+            )
+            conn.commit()
+            conn.close()
+            flash("Evento actualizado.", "success")
+        except Exception as e:
+            flash(f"Error: {e}", "danger")
+
+    return redirect(url_for("calendario"))
+
+    return redirect(url_for("calendario"))
+
+
 @app.route("/crear_perfil", methods=["GET", "POST"])
 def crear_perfil():
     if not login_requerido():
