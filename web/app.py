@@ -199,6 +199,12 @@ def dashboard():
                 )
         mensajes_nuevos = cur.fetchone()[0]
 
+        cur.execute(
+            "SELECT titulo, descripcion, fecha FROM Evento "
+            "WHERE fecha >= CURRENT_DATE ORDER BY fecha ASC LIMIT 5"
+        )
+        proximos_eventos = cur.fetchall()
+
         conn.close()
     except Exception as e:
         print("ERROR NOTIFICACIONES:", e)
@@ -208,7 +214,8 @@ def dashboard():
                            nombre_display=nombre_display,
                            es_daem=es_daem,
                            solicitudes_pendientes=solicitudes_pendientes,
-                           mensajes_nuevos=mensajes_nuevos)
+                           mensajes_nuevos=mensajes_nuevos,
+                           proximos_eventos=proximos_eventos)
 
 
 @app.route("/inventario", methods=["GET", "POST"])
@@ -909,6 +916,74 @@ def encargados():
                            usuario=session["usuario"],
                            encargados=lista,
                            establecimientos=ESTABLECIMIENTOS)
+
+
+@app.route("/calendario", methods=["GET", "POST"])
+def calendario():
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+
+    if request.method == "POST" and es_daem:
+        titulo = request.form.get("titulo", "").strip()
+        descripcion = request.form.get("descripcion", "").strip()
+        fecha = request.form.get("fecha", "").strip()
+
+        if titulo and fecha:
+            try:
+                conn = obtener_conexion()
+                cur = conn.cursor()
+                cur.execute(
+                    "INSERT INTO Evento (titulo, descripcion, fecha, id_usuario_creador) "
+                    "VALUES (%s, %s, %s, %s)",
+                    (titulo, descripcion, fecha, session["id_usuario"])
+                )
+                conn.commit()
+                conn.close()
+                flash("Evento creado.", "success")
+            except Exception as e:
+                flash(f"Error: {e}", "danger")
+        return redirect(url_for("calendario"))
+
+    eventos = []
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT id_evento, titulo, descripcion, fecha FROM Evento ORDER BY fecha DESC"
+        )
+        eventos = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        flash(f"Error: {e}", "danger")
+
+    return render_template("calendario.html",
+                           usuario=session["usuario"],
+                           es_daem=es_daem,
+                           eventos=eventos)
+
+
+@app.route("/calendario/eliminar/<int:id_evento>", methods=["POST"])
+def eliminar_evento(id_evento):
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+    if not es_daem:
+        return redirect(url_for("dashboard"))
+
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM Evento WHERE id_evento = %s", (id_evento,))
+        conn.commit()
+        conn.close()
+        flash("Evento eliminado.", "success")
+    except Exception as e:
+        flash(f"Error: {e}", "danger")
+
+    return redirect(url_for("calendario"))
 
 
 @app.route("/crear_perfil", methods=["GET", "POST"])

@@ -21,4 +21,16 @@
 {% if solicitudes_pendientes == 0 and mensajes_nuevos == 0 %}
 <p style="color:#888;">No hay notificaciones nuevas.</p>
 {% endif %}
+
+{% if proximos_eventos %}
+<div class="alerta alerta-warning">
+    <strong>Proximos eventos:</strong>
+    <ul style="margin:6px 0 0 16px;">
+        {% for titulo, desc, fecha in proximos_eventos %}
+        <li><strong>{{ titulo }}</strong> - {{ fecha.strftime('%d/%m/%Y') }}{% if desc %}: {{ desc }}{% endif %}</li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('calendario') }}">Ver calendario</a>
+</div>
+{% endif %}
 {% endblock %}

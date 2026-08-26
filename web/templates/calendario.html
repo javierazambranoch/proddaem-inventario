@@ -1,72 +1,54 @@
 {% extends "base.html" %}
 {% block titulo %}ProDaem - Calendario{% endblock %}
 {% block contenido %}
-<h1>Calendario de Eventos</h1>
+<h1>Calendario</h1>
 
 {% if es_daem %}
-<p style="color:#666; margin-bottom:16px;">Como DAEM, puedes publicar fechas visibles para todos los establecimientos o guardar eventos solo en tu agenda.</p>
-{% else %}
-<p style="color:#666; margin-bottom:16px;">Tu agenda privada mas las fechas publicadas por DAEM para toda la comuna.</p>
-{% endif %}
-
-<form method="POST" class="formulario" style="margin-bottom: 24px;">
+<form method="POST" class="formulario">
     <div class="campo">
-        <label>Titulo del evento *</label>
-        <input type="text" name="titulo" required placeholder="Ej: Reunion de apoderados, Feriado...">
+        <label>Titulo *</label>
+        <input type="text" name="titulo" required placeholder="Ej: Reunion de apoderados">
     </div>
     <div class="campo">
         <label>Fecha *</label>
         <input type="date" name="fecha" required>
     </div>
-    <div class="campo">
-        <label>Hora</label>
-        <input type="time" name="hora" value="08:00">
-    </div>
     <div class="campo" style="grid-column: 1 / -1;">
         <label>Descripcion</label>
-        <textarea name="descripcion" rows="2" placeholder="Detalle opcional del evento"></textarea>
+        <textarea name="descripcion" rows="2" placeholder="Detalle del evento..."></textarea>
     </div>
-    <button type="submit" class="btn-guardar">{% if es_daem %}Publicar evento{% else %}Agregar a mi agenda{% endif %}</button>
+    <button type="submit" class="btn-guardar">Crear Evento</button>
 </form>
+{% endif %}
 
 <div class="tabla-container">
 <table class="tabla">
     <thead>
         <tr>
             <th>Fecha</th>
-            <th>Hora</th>
-            <th>Evento</th>
-            <th>Establecimiento</th>
-            <th>Tipo</th>
-            <th></th>
+            <th>Titulo</th>
+            <th>Descripcion</th>
+            {% if es_daem %}<th></th>{% endif %}
         </tr>
     </thead>
     <tbody>
         {% for ev in eventos %}
         <tr>
-            <td>{{ ev[3].strftime('%d/%m/%Y') if ev[3] else ev[3] }}</td>
-            <td>{{ ev[4].strftime('%H:%M') if ev[4] else ev[4] }}</td>
-            <td><strong>{{ ev[1] }}</strong>{% if ev[2] %}<br><small style="color:#888;">{{ ev[2] }}</small>{% endif %}</td>
-            <td>{{ ev[5] }}</td>
+            <td>{{ ev[3].strftime('%d/%m/%Y') }}</td>
+            <td>{{ ev[1] }}</td>
+            <td>{{ ev[2] if ev[2] else '-' }}</td>
+            {% if es_daem %}
             <td>
-                {% if ev[6] == 'daem' %}
-                <span class="badge badge-daem">DAEM - Todos</span>
-                {% else %}
-                <span class="badge badge-agenda">Agenda propia</span>
-                {% endif %}
-            </td>
-            <td>
-                {% if es_daem or ev[6] == 'agenda' %}
-                <form method="POST" action="{{ url_for('cal_eliminar', id_evento=ev[0]) }}" class="inline"
-                      onsubmit="return confirm('Eliminar este evento?')">
+                <form method="POST" action="{{ url_for('eliminar_evento', id_evento=ev[0]) }}" class="inline"
+                      onsubmit="return confirm('Eliminar evento?')">
                     <button type="submit" class="btn-eliminar" title="Eliminar">&#10005;</button>
                 </form>
-                {% endif %}
             </td>
+            {% endif %}
         </tr>
         {% endfor %}
         {% if not eventos %}
-        <tr><td colspan="6" class="vacio">No hay eventos registrados.</td></tr>
+        <tr><td colspan="4" class="vacio">No hay eventos.</td></tr>
         {% endif %}
     </tbody>
 </table>
