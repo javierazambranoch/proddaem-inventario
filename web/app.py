@@ -954,7 +954,9 @@ def calendario():
         cur = conn.cursor()
         if es_daem:
             cur.execute(
-                "SELECT id_evento, titulo, descripcion, fecha, visible_para_todos FROM Evento ORDER BY fecha DESC"
+                "SELECT id_evento, titulo, descripcion, fecha, visible_para_todos FROM Evento "
+                "WHERE id_usuario_creador = %s ORDER BY fecha DESC",
+                (session["id_usuario"],)
             )
         else:
             cur.execute(
