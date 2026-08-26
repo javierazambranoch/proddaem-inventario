@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block titulo %}ProDaem - Encargados{% endblock %}
+{% block contenido %}
+<h1>Encargados de Establecimientos</h1>
+
+<form method="POST" class="formulario">
+    <input type="hidden" name="accion" value="agregar">
+    <div class="campo">
+        <label>Establecimiento *</label>
+        <select name="id_establecimiento" required>
+            {% for nombre, id in establecimientos.items() %}
+            <option value="{{ id }}">{{ nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="campo">
+        <label>Nombre *</label>
+        <input type="text" name="nombre" required placeholder="Nombre del encargado">
+    </div>
+    <div class="campo">
+        <label>Cargo</label>
+        <input type="text" name="cargo" value="Encargado" placeholder="Ej: Encargado, Director...">
+    </div>
+    <div class="campo">
+        <label>Telefono</label>
+        <input type="text" name="telefono" placeholder="Ej: +56912345678">
+    </div>
+    <div class="campo">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="Ej: correo@escuela.cl">
+    </div>
+    <button type="submit" class="btn-guardar">Agregar Encargado</button>
+</form>
+
+<div class="tabla-container">
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Establecimiento</th>
+            <th>Nombre</th>
+            <th>Cargo</th>
+            <th>Telefono</th>
+            <th>Email</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for enc in encargados %}
+        {% set est_nombre = '' %}
+        {% for nombre, id in establecimientos.items() %}
+            {% if id == enc[1] %}{% set est_nombre = nombre %}{% endif %}
+        {% endfor %}
+        <tr>
+            <td>{{ est_nombre }}</td>
+            <td>{{ enc[2] }}</td>
+            <td>{{ enc[3] }}</td>
+            <td>{{ enc[4] if enc[4] else '-' }}</td>
+            <td>{{ enc[5] if enc[5] else '-' }}</td>
+            <td>
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="accion" value="eliminar">
+                    <input type="hidden" name="id_encargado" value="{{ enc[0] }}">
+                    <button type="submit" class="btn-eliminar" title="Eliminar"
+                            onsubmit="return confirm('Eliminar encargado {{ enc[2] }}?')">&#10005;</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        {% if not encargados %}
+        <tr><td colspan="6" class="vacio">No hay encargados registrados.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

@@ -824,5 +824,92 @@ def historial():
                            filtro=filtro)
 
 
+@app.route("/encargados", methods=["GET", "POST"])
+def encargados():
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+    if not es_daem:
+        return redirect(url_for("dashboard"))
+
+    if request.method == "POST":
+        accion = request.form.get("accion", "")
+
+        if accion == "agregar":
+            id_est = request.form.get("id_establecimiento", "").strip()
+            nombre = request.form.get("nombre", "").strip()
+            cargo = request.form.get("cargo", "Encargado").strip()
+            telefono = request.form.get("telefono", "").strip()
+            email = request.form.get("email", "").strip()
+            if id_est and nombre:
+                try:
+                    conn = obtener_conexion()
+                    cur = conn.cursor()
+                    cur.execute(
+                        "INSERT INTO Encargado (id_establecimiento, nombre, cargo, telefono, email) "
+                        "VALUES (%s, %s, %s, %s, %s)",
+                        (int(id_est), nombre, cargo, telefono, email)
+                    )
+                    conn.commit()
+                    conn.close()
+                    flash("Encargado agregado.", "success")
+                except Exception as e:
+                    flash(f"Error: {e}", "danger")
+
+        elif accion == "editar":
+            id_enc = request.form.get("id_encargado", "").strip()
+            nombre = request.form.get("nombre", "").strip()
+            cargo = request.form.get("cargo", "").strip()
+            telefono = request.form.get("telefono", "").strip()
+            email = request.form.get("email", "").strip()
+            if id_enc and nombre:
+                try:
+                    conn = obtener_conexion()
+                    cur = conn.cursor()
+                    cur.execute(
+                        "UPDATE Encargado SET nombre=%s, cargo=%s, telefono=%s, email=%s "
+                        "WHERE id_encargado=%s",
+                        (nombre, cargo, telefono, email, int(id_enc))
+                    )
+                    conn.commit()
+                    conn.close()
+                    flash("Encargado actualizado.", "success")
+                except Exception as e:
+                    flash(f"Error: {e}", "danger")
+
+        elif accion == "eliminar":
+            id_enc = request.form.get("id_encargado", "").strip()
+            try:
+                conn = obtener_conexion()
+                cur = conn.cursor()
+                cur.execute("DELETE FROM Encargado WHERE id_encargado=%s", (int(id_enc),))
+                conn.commit()
+                conn.close()
+                flash("Encargado eliminado.", "success")
+            except Exception as e:
+                flash(f"Error: {e}", "danger")
+
+        return redirect(url_for("encargados"))
+
+    lista = []
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT e.id_encargado, e.id_establecimiento, e.nombre, e.cargo, e.telefono, e.email "
+            "FROM Encargado e ORDER BY e.id_establecimiento"
+        )
+        lista = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        flash(f"Error: {e}", "danger")
+
+    return render_template("encargados.html",
+                           usuario=session["usuario"],
+                           encargados=lista,
+                           establecimientos=ESTABLECIMIENTOS)
+
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
