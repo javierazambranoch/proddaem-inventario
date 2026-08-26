@@ -20,7 +20,8 @@ ESTABLECIMIENTOS = {
 
 NOMBRES_DISPLAY = {
     "admin_liceo": "Victor Pinto",
-    "admin_saber": "Victor Pinto"
+    "admin_saber": "Victor Pinto",
+    "admin_daem": "Daniel Medina"
 }
 
 
