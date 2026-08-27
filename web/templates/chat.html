@@ -14,11 +14,16 @@
 
 <div class="chat-container">
     <div class="chat-mensajes" id="chat-mensajes">
-        {% for msg, fecha, usr in mensajes %}
+        {% for mid, msg, fecha, usr, dest in mensajes %}
         <div class="chat-msg {% if usr == usuario %}chat-mio{% else %}chat-otro{% endif %}">
             <span class="chat-usuario">{{ usr }}</span>
             <span class="chat-texto">{{ msg }}</span>
-            <span class="chat-fecha">{{ fecha.strftime('%d/%m/%H:%M') }}</span>
+            <span class="chat-fecha">
+                {{ fecha.strftime('%d/%m/%H:%M') }}
+                {% if usr == usuario %}
+                    {% if mid in visto_ids %}<span class="chat-visto"> · Visto</span>{% endif %}
+                {% endif %}
+            </span>
         </div>
         {% endfor %}
         {% if not mensajes %}

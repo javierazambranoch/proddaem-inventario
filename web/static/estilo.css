@@ -41,6 +41,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .chat-otro .chat-usuario { color: #1565c0; }
 .chat-texto { display: block; word-wrap: break-word; }
 .chat-fecha { display: block; font-size: 10px; margin-top: 4px; opacity: 0.7; }
+.chat-visto { color: #81d4fa; font-weight: 600; }
 .chat-form { display: flex; gap: 10px; }
 .chat-form input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
 .chat-form button { padding: 12px 24px; background: #1565c0; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }

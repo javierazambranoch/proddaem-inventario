@@ -70,6 +70,15 @@ def crear_tabla_mensajes():
             cur.execute("ALTER TABLE Mensaje ADD COLUMN IF NOT EXISTS id_establecimiento_destino INTEGER")
         except Exception:
             pass
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS Mensaje_leido (
+                id_leido SERIAL PRIMARY KEY,
+                id_mensaje INTEGER NOT NULL,
+                id_establecimiento INTEGER NOT NULL,
+                leido_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE (id_mensaje, id_establecimiento)
+            )
+        """)
         conn.commit()
         conn.close()
     except Exception as e:
@@ -177,26 +186,26 @@ def dashboard():
         )
         solicitudes_pendientes = cur.fetchone()[0]
 
-        ultimo_visita = session.get("chat_ultimo_visita")
         if es_daem:
-            if ultimo_visita:
-                cur.execute("SELECT COUNT(*) FROM Mensaje WHERE fecha_hora > %s", (ultimo_visita,))
-            else:
-                cur.execute("SELECT COUNT(*) FROM Mensaje")
+            cur.execute(
+                "SELECT COUNT(*) FROM Mensaje m "
+                "JOIN Usuario u ON m.id_usuario = u.id_usuario "
+                "WHERE u.nombre_usuario <> 'admin_daem' "
+                "AND NOT EXISTS (SELECT 1 FROM Mensaje_leido l "
+                "                 WHERE l.id_mensaje = m.id_mensaje AND l.id_establecimiento = 1)"
+            )
         else:
-            if ultimo_visita:
-                cur.execute(
-                    "SELECT COUNT(*) FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
-                    "WHERE (u.id_establecimiento = %s OR u.nombre_usuario = 'admin_daem') "
-                    "AND m.fecha_hora > %s",
-                    (id_est, ultimo_visita)
-                )
-            else:
-                cur.execute(
-                    "SELECT COUNT(*) FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
-                    "WHERE u.id_establecimiento = %s OR u.nombre_usuario = 'admin_daem'",
-                    (id_est,)
-                )
+            cur.execute(
+                "SELECT COUNT(*) FROM Mensaje m "
+                "JOIN Usuario u ON m.id_usuario = u.id_usuario "
+                "WHERE ((u.id_establecimiento = %s AND m.id_establecimiento_destino IS NULL) "
+                "       OR (m.id_establecimiento_destino = %s AND u.nombre_usuario = 'admin_daem') "
+                "       OR (m.id_establecimiento_destino IS NULL AND u.nombre_usuario = 'admin_daem')) "
+                "AND u.nombre_usuario <> 'admin_daem' "
+                "AND NOT EXISTS (SELECT 1 FROM Mensaje_leido l "
+                "                 WHERE l.id_mensaje = m.id_mensaje AND l.id_establecimiento = %s)",
+                (id_est, id_est, id_est)
+            )
         mensajes_nuevos = cur.fetchone()[0]
 
         if es_daem:
@@ -658,7 +667,7 @@ def chat():
         if es_daem:
             if est_filtro != "0":
                 cur.execute(
-                    "SELECT m.mensaje, m.fecha_hora, u.nombre_usuario "
+                    "SELECT m.id_mensaje, m.mensaje, m.fecha_hora, u.nombre_usuario, m.id_establecimiento_destino "
                     "FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
                     "WHERE (m.id_establecimiento_destino = %s AND u.nombre_usuario = 'admin_daem') "
                     "OR (u.id_establecimiento = %s AND m.id_establecimiento_destino IS NULL) "
@@ -669,14 +678,14 @@ def chat():
                 )
             else:
                 cur.execute(
-                    "SELECT m.mensaje, m.fecha_hora, u.nombre_usuario "
+                    "SELECT m.id_mensaje, m.mensaje, m.fecha_hora, u.nombre_usuario, m.id_establecimiento_destino "
                     "FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
                     "WHERE m.id_establecimiento_destino IS NULL "
                     "ORDER BY m.fecha_hora ASC"
                 )
         else:
             cur.execute(
-                "SELECT m.mensaje, m.fecha_hora, u.nombre_usuario "
+                "SELECT m.id_mensaje, m.mensaje, m.fecha_hora, u.nombre_usuario, m.id_establecimiento_destino "
                 "FROM Mensaje m JOIN Usuario u ON m.id_usuario = u.id_usuario "
                 "WHERE (u.id_establecimiento = %s AND m.id_establecimiento_destino IS NULL) "
                 "OR (m.id_establecimiento_destino = %s AND u.nombre_usuario = 'admin_daem') "
@@ -684,10 +693,51 @@ def chat():
                 "ORDER BY m.fecha_hora ASC",
                 (id_est, id_est)
             )
-        mensajes = cur.fetchall()
+        filas = cur.fetchall()
+
+        leido_ids = []
+        for fila in filas:
+            leido_ids.append(fila[0])
+        if leido_ids:
+            cur.executemany(
+                "INSERT INTO Mensaje_leido (id_mensaje, id_establecimiento) VALUES (%s, %s) "
+                "ON CONFLICT (id_mensaje, id_establecimiento) DO NOTHING",
+                [(mid, id_est if not es_daem else 1) for mid in leido_ids]
+            )
+            conn.commit()
+
+        if filas:
+            cur.execute(
+                "SELECT id_mensaje, id_establecimiento FROM Mensaje_leido "
+                "WHERE id_mensaje = ANY(%s)",
+                (leido_ids,)
+            )
+            reads = {}
+            for rmid, rest in cur.fetchall():
+                reads.setdefault(rmid, set()).add(rest)
+        else:
+            reads = {}
+
+        visto_ids = set()
+        for mid, msg, fecha, usr, dest in filas:
+            if usr != usuario:
+                continue
+            if es_daem:
+                if dest is None:
+                    if reads.get(mid) and any(e != 1 for e in reads[mid]):
+                        visto_ids.add(mid)
+                elif dest in reads.get(mid, set()):
+                    visto_ids.add(mid)
+            else:
+                if 1 in reads.get(mid, set()):
+                    visto_ids.add(mid)
+
+        mensajes = filas
         conn.close()
     except Exception as e:
         flash(f"Error al cargar chat: {e}", "danger")
+        mensajes = []
+        visto_ids = set()
 
     return render_template("chat.html",
                            usuario=session["usuario"],
@@ -695,7 +745,8 @@ def chat():
                            es_daem=es_daem,
                            mensajes=mensajes,
                            est_filtro=est_filtro,
-                           establecimientos=ESTABLECIMIENTOS)
+                           establecimientos=ESTABLECIMIENTOS,
+                           visto_ids=visto_ids)
 
 
 @app.route("/historial")
