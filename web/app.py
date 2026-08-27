@@ -634,6 +634,7 @@ def chat():
     es_daem = session["usuario"].lower() == "admin_daem"
     id_usuario = session["id_usuario"]
     id_est = session["id_establecimiento"]
+    usuario = session["usuario"]
     nombre_display = session.get("nombre_display", session["usuario"])
     est_filtro = request.args.get("establecimiento", str(id_est) if not es_daem else "0")
 
