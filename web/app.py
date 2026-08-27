@@ -136,7 +136,7 @@ def login():
             conn = obtener_conexion()
             cur = conn.cursor()
             cur.execute(
-                "SELECT id_usuario, id_establecimiento FROM Usuario "
+                "SELECT id_usuario, id_establecimiento, nombre_completo FROM Usuario "
                 "WHERE nombre_usuario = %s AND clave_hash = %s",
                 (nombre, clave_hash)
             )
@@ -148,7 +148,9 @@ def login():
                 session["id_usuario"] = resultado[0]
                 session["id_establecimiento"] = resultado[1]
                 nombre_display = NOMBRES_DISPLAY.get(nombre, nombre)
-                if nombre != "admin_daem":
+                if resultado[2]:
+                    nombre_display = resultado[2]
+                elif nombre != "admin_daem":
                     try:
                         conn2 = obtener_conexion()
                         cur2 = conn2.cursor()
@@ -1117,34 +1119,38 @@ def mi_perfil():
     es_daem = session["usuario"].lower() == "admin_daem"
     id_est = session["id_establecimiento"]
 
-    if request.method == "POST" and not es_daem:
-        nombre = request.form.get("nombre", "").strip()
-        cargo = request.form.get("cargo", "").strip()
-        telefono = request.form.get("telefono", "").strip()
-        email = request.form.get("email", "").strip()
+    if request.method == "POST":
+        nombre_completo = request.form.get("nombre_completo", "").strip()
+        celular = request.form.get("celular", "").strip()
+        correo = request.form.get("correo", "").strip()
+        direccion = request.form.get("direccion", "").strip()
+        clavenueva = request.form.get("clavenueva", "").strip()
         try:
             conn = obtener_conexion()
             cur = conn.cursor()
             cur.execute(
-                "SELECT id_encargado FROM Encargado WHERE id_establecimiento = %s ORDER BY id_encargado LIMIT 1",
-                (id_est,)
+                "UPDATE Usuario SET nombre_completo=%s, celular=%s, correo=%s, direccion=%s "
+                "WHERE id_usuario=%s",
+                (nombre_completo if nombre_completo else None,
+                 celular if celular else None,
+                 correo if correo else None,
+                 direccion if direccion else None,
+                 session["id_usuario"])
             )
-            enc = cur.fetchone()
-            if enc:
+            if clavenueva:
+                nuevo_hash = hashlib.sha256(clavenueva.encode()).hexdigest()
                 cur.execute(
-                    "UPDATE Encargado SET nombre=%s, cargo=%s, telefono=%s, email=%s WHERE id_encargado=%s",
-                    (nombre, cargo, telefono, email, enc[0])
-                )
-            else:
-                cur.execute(
-                    "INSERT INTO Encargado (id_establecimiento, nombre, cargo, telefono, email) "
-                    "VALUES (%s, %s, %s, %s, %s)",
-                    (id_est, nombre, cargo, telefono, email)
+                    "UPDATE Usuario SET clave_hash=%s WHERE id_usuario=%s",
+                    (nuevo_hash, session["id_usuario"])
                 )
             conn.commit()
             conn.close()
-            session["nombre_display"] = nombre if nombre else session["usuario"]
-            flash("Perfil actualizado.", "success")
+            if nombre_completo:
+                session["nombre_display"] = nombre_completo
+            mensaje = "Perfil actualizado."
+            if clavenueva:
+                mensaje += " Clave cambiada."
+            flash(mensaje, "success")
         except Exception as e:
             flash(f"Error: {e}", "danger")
         return redirect(url_for("mi_perfil"))
@@ -1157,15 +1163,17 @@ def mi_perfil():
         cur = conn.cursor()
         cur.execute("SELECT nombre_establecimiento FROM Establecimiento WHERE id_establecimiento = %s", (id_est,))
         row = cur.fetchone()
-        perfil["establecimiento"] = row[0] if row else ""
+        perfil["establecimiento"] = row[0] if row else "DAEM"
         cur.execute(
-            "SELECT id_encargado, nombre, cargo, telefono, email FROM Encargado "
-            "WHERE id_establecimiento = %s ORDER BY id_encargado LIMIT 1",
-            (id_est,)
+            "SELECT nombre_completo, celular, correo, direccion, encargado_nombre FROM ("
+            "  SELECT u.nombre_completo, u.celular, u.correo, u.direccion, "
+            "         (SELECT e.nombre FROM Encargado e WHERE e.id_establecimiento = u.id_establecimiento ORDER BY e.id_encargado LIMIT 1) AS encargado_nombre "
+            "  FROM Usuario u WHERE u.id_usuario = %s"
+            ") sub",
+            (session["id_usuario"],)
         )
-        enc = cur.fetchone()
+        perfil.update(dict(zip(["nombre_completo", "celular", "correo", "direccion", "encargado_nombre"], cur.fetchone())))
         conn.close()
-        perfil["encargado"] = enc
     except Exception as e:
         flash(f"Error: {e}", "danger")
 
