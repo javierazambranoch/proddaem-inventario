@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}ProDaem - Mi Perfil{% endblock %}
+{% block contenido %}
+<h1>Mi Perfil</h1>
+<p style="color:#666; margin-bottom:20px;">Información de tu perfil y datos del encargado.</p>
+
+<div class="perfil-info">
+    <p><strong>Usuario:</strong> {{ perfil.usuario }}</p>
+    <p><strong>Establecimiento:</strong> {{ perfil.establecimiento or 'DAEM' }}</p>
+    <p><strong>Encargado:</strong> {{ (perfil.encargado[1] if perfil.encargado else None) or '-' }}</p>
+</div>
+
+{% if not es_daem %}
+<h2 style="margin-top:24px; color:#1565c0;">Editar mis datos de encargado</h2>
+<form method="POST" class="formulario">
+    <div class="campo">
+        <label>Nombre *</label>
+        <input type="text" name="nombre" required value="{{ perfil.encargado[1] if perfil.encargado and perfil.encargado[1] else '' }}" placeholder="Nombre del encargado">
+    </div>
+    <div class="campo">
+        <label>Cargo</label>
+        <input type="text" name="cargo" value="{{ perfil.encargado[2] if perfil.encargado and perfil.encargado[2] else '' }}" placeholder="Ej: Encargado">
+    </div>
+    <div class="campo">
+        <label>Telefono</label>
+        <input type="text" name="telefono" value="{{ perfil.encargado[3] if perfil.encargado and perfil.encargado[3] else '' }}" placeholder="Ej: +56912345678">
+    </div>
+    <div class="campo">
+        <label>Email</label>
+        <input type="text" name="email" value="{{ perfil.encargado[4] if perfil.encargado and perfil.encargado[4] else '' }}" placeholder="Ej: correo@escuela.cl">
+    </div>
+    <button type="submit" class="btn-guardar">Guardar Perfil</button>
+</form>
+{% else %}
+<p style="color:#888; margin-top:20px;">El perfil de DAEM no se edita desde aquí.</p>
+{% endif %}
+{% endblock %}

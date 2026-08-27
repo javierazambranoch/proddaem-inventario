@@ -19,6 +19,7 @@
             <a href="{{ url_for('calendario') }}" class="{% if request.endpoint == 'calendario' %}activo{% endif %}">Calendario</a>
             <a href="{{ url_for('historial') }}" class="{% if request.endpoint == 'historial' %}activo{% endif %}">Historial</a>
             <a href="{{ url_for('chat') }}" class="{% if request.endpoint == 'chat' %}activo{% endif %}">Chat</a>
+            <a href="{{ url_for('mi_perfil') }}" class="{% if request.endpoint == 'mi_perfil' %}activo{% endif %}">Mi Perfil</a>
             {% if session.usuario == 'admin_daem' %}
             <a href="{{ url_for('encargados') }}" class="{% if request.endpoint == 'encargados' %}activo{% endif %}">Encargados</a>
             <a href="{{ url_for('crear_perfil') }}" class="{% if request.endpoint == 'crear_perfil' %}activo{% endif %}">Crear Perfil</a>

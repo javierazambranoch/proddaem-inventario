@@ -58,6 +58,9 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .btn-cancelar { padding: 10px 20px; background: #999; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
 .btn-cancelar:hover { background: #777; }
 
+.perfil-info { background: #e3f2fd; border: 1px solid #90caf9; padding: 16px 20px; border-radius: 8px; line-height: 1.8; }
+.perfil-info p { margin: 0; }
+
 .badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
 .badge-todos { background: #e3f2fd; color: #1565c0; }
 .badge-propio { background: #fdecea; color: #c62828; }

@@ -147,7 +147,23 @@ def login():
                 session["usuario"] = nombre
                 session["id_usuario"] = resultado[0]
                 session["id_establecimiento"] = resultado[1]
-                session["nombre_display"] = NOMBRES_DISPLAY.get(nombre, nombre)
+                nombre_display = NOMBRES_DISPLAY.get(nombre, nombre)
+                if nombre != "admin_daem":
+                    try:
+                        conn2 = obtener_conexion()
+                        cur2 = conn2.cursor()
+                        cur2.execute(
+                            "SELECT nombre FROM Encargado WHERE id_establecimiento = %s "
+                            "ORDER BY id_encargado LIMIT 1",
+                            (resultado[1],)
+                        )
+                        enc = cur2.fetchone()
+                        conn2.close()
+                        if enc and enc[0]:
+                            nombre_display = enc[0]
+                    except Exception:
+                        pass
+                session["nombre_display"] = nombre_display
                 registrar_historial(resultado[0], "Inicio de sesión")
                 return redirect(url_for("dashboard"))
             else:
@@ -1091,6 +1107,72 @@ def crear_perfil():
 
     return render_template("crear_perfil.html",
                            usuario=session["usuario"])
+
+
+@app.route("/mi_perfil", methods=["GET", "POST"])
+def mi_perfil():
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+    id_est = session["id_establecimiento"]
+
+    if request.method == "POST" and not es_daem:
+        nombre = request.form.get("nombre", "").strip()
+        cargo = request.form.get("cargo", "").strip()
+        telefono = request.form.get("telefono", "").strip()
+        email = request.form.get("email", "").strip()
+        try:
+            conn = obtener_conexion()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT id_encargado FROM Encargado WHERE id_establecimiento = %s ORDER BY id_encargado LIMIT 1",
+                (id_est,)
+            )
+            enc = cur.fetchone()
+            if enc:
+                cur.execute(
+                    "UPDATE Encargado SET nombre=%s, cargo=%s, telefono=%s, email=%s WHERE id_encargado=%s",
+                    (nombre, cargo, telefono, email, enc[0])
+                )
+            else:
+                cur.execute(
+                    "INSERT INTO Encargado (id_establecimiento, nombre, cargo, telefono, email) "
+                    "VALUES (%s, %s, %s, %s, %s)",
+                    (id_est, nombre, cargo, telefono, email)
+                )
+            conn.commit()
+            conn.close()
+            session["nombre_display"] = nombre if nombre else session["usuario"]
+            flash("Perfil actualizado.", "success")
+        except Exception as e:
+            flash(f"Error: {e}", "danger")
+        return redirect(url_for("mi_perfil"))
+
+    perfil = {
+        "usuario": session["usuario"],
+    }
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        cur.execute("SELECT nombre_establecimiento FROM Establecimiento WHERE id_establecimiento = %s", (id_est,))
+        row = cur.fetchone()
+        perfil["establecimiento"] = row[0] if row else ""
+        cur.execute(
+            "SELECT id_encargado, nombre, cargo, telefono, email FROM Encargado "
+            "WHERE id_establecimiento = %s ORDER BY id_encargado LIMIT 1",
+            (id_est,)
+        )
+        enc = cur.fetchone()
+        conn.close()
+        perfil["encargado"] = enc
+    except Exception as e:
+        flash(f"Error: {e}", "danger")
+
+    return render_template("mi_perfil.html",
+                           usuario=session["usuario"],
+                           es_daem=es_daem,
+                           perfil=perfil)
 
 
 if __name__ == "__main__":
