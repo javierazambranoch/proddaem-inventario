@@ -180,10 +180,15 @@ def dashboard():
         cur = conn.cursor()
 
         id_est = session["id_establecimiento"]
-        cur.execute(
-            "SELECT COUNT(*) FROM solicitud WHERE id_establecimiento = %s AND estado = 'pendiente'",
-            (id_est,)
-        )
+        if es_daem:
+            cur.execute(
+                "SELECT COUNT(DISTINCT id_solicitud) FROM solicitud WHERE estado IN ('pendiente', 'en proceso')"
+            )
+        else:
+            cur.execute(
+                "SELECT COUNT(*) FROM solicitud WHERE id_establecimiento = %s AND notif_cambio = TRUE",
+                (id_est,)
+            )
         solicitudes_pendientes = cur.fetchone()[0]
 
         if es_daem:
@@ -355,9 +360,9 @@ def inv_guardar():
             cur.execute(
                 """INSERT INTO solicitud
                 (nombre_producto, nro_serie, cantidad, caracteristicas,
-                 estado, descripcion, prioridad, id_usuario, id_establecimiento)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-                (nombre_prod, codigo, 1, caracts, "pendiente", desc, prioridad, id_usuario, id_establecimiento)
+                 estado, descripcion, prioridad, id_usuario, id_establecimiento, notif_cambio)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                (nombre_prod, codigo, 1, caracts, "pendiente", desc, prioridad, id_usuario, id_establecimiento, True)
             )
             solicitud_creada = True
 
@@ -467,6 +472,14 @@ def solicitudes():
             )
 
         lista = cur.fetchall()
+
+        if not es_daem:
+            cur.execute(
+                "UPDATE solicitud SET notif_cambio = FALSE WHERE id_establecimiento = %s AND notif_cambio = TRUE",
+                (id_est,)
+            )
+            conn.commit()
+
         conn.close()
 
     except Exception as e:
@@ -515,11 +528,11 @@ def sol_enviar():
         cur.execute(
             """INSERT INTO solicitud
             (nombre_producto, nro_serie, cantidad, caracteristicas,
-             estado, descripcion, prioridad, id_usuario, id_establecimiento)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+             estado, descripcion, prioridad, id_usuario, id_establecimiento, notif_cambio)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             (producto, f"{marca} {modelo}", cantidad_num,
              caracteristicas if caracteristicas else None,
-             "pendiente", descripcion, prioridad, id_usuario, id_est)
+             "pendiente", descripcion, prioridad, id_usuario, id_est, True)
         )
         conn.commit()
         conn.close()
@@ -590,7 +603,7 @@ def sol_cambiar_estado(id_solicitud):
 
         # Actualizar estado
         cur.execute(
-            "UPDATE solicitud SET estado = %s WHERE id_solicitud = %s",
+            "UPDATE solicitud SET estado = %s, notif_cambio = TRUE WHERE id_solicitud = %s",
             (nuevo_estado, id_solicitud)
         )
 

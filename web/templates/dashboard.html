@@ -6,8 +6,13 @@
 
 {% if solicitudes_pendientes > 0 %}
 <div class="alerta alerta-info">
-    Tiene <strong>{{ solicitudes_pendientes }}</strong> solicitud(es) pendiente(s).
+    {% if es_daem %}
+    Tiene <strong>{{ solicitudes_pendientes }}</strong> solicitud(es) por atender.
     <a href="{{ url_for('solicitudes') }}">Ver solicitudes</a>
+    {% else %}
+    Tiene <strong>{{ solicitudes_pendientes }}</strong> solicitud(es) con novedades.
+    <a href="{{ url_for('solicitudes') }}">Ver solicitudes</a>
+    {% endif %}
 </div>
 {% endif %}
 
