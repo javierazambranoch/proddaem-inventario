@@ -5,6 +5,10 @@
 
 {% if es_daem %}
 <p style="color:#666; margin-bottom:16px;">Como DAEM, puedes publicar fechas visibles para todos los establecimientos o guardar eventos solo en tu agenda.</p>
+{% else %}
+<p style="color:#666; margin-bottom:16px;">Puedes publicar eventos visibles para DAEM o guardarlos en tu agenda privada.</p>
+{% endif %}
+
 <form method="POST" class="formulario">
     <div class="campo">
         <label>Titulo del evento *</label>
@@ -21,10 +25,11 @@
     <div class="campo">
         <label>Visible para</label>
         <select name="para_todos" id="sel-para-todos">
-            <option value="1">Todos los establecimientos</option>
-            <option value="0">Agenda propia</option>
+            <option value="1">{% if es_daem %}Todos los establecimientos{% else %}Publicar (visible para DAEM){% endif %}</option>
+            <option value="0">{% if es_daem %}Agenda propia{% else %}Agenda privada (solo yo){% endif %}</option>
         </select>
     </div>
+    {% if es_daem %}
     <div class="campo" id="campo-destino">
         <label>Establecimiento destino</label>
         <select name="destino">
@@ -34,13 +39,13 @@
             {% endfor %}
         </select>
     </div>
+    {% endif %}
     <div class="campo" style="grid-column: 1 / -1;">
         <label>Descripcion</label>
         <textarea name="descripcion" rows="2" placeholder="Detalle opcional del evento..."></textarea>
     </div>
     <button type="submit" class="btn-guardar">Publicar evento</button>
 </form>
-{% endif %}
 
 <div class="tabla-container">
 <table class="tabla">
@@ -49,9 +54,9 @@
             <th>Fecha</th>
             <th>Hora</th>
             <th>Evento</th>
-            <th>Establecimiento</th>
+            <th>Origen</th>
             <th>Tipo</th>
-            {% if es_daem %}<th></th>{% endif %}
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -70,13 +75,13 @@
                 {% endif %}
             </td>
             <td>
-                {% if ev[5] %}<span class="badge badge-todos">Todos</span>{% else %}<span class="badge badge-propio">Agenda propia</span>{% endif %}
+                {% if ev[5] %}<span class="badge badge-todos">Publico</span>{% else %}<span class="badge badge-propio">Privado</span>{% endif %}
             </td>
-            {% if es_daem %}
-            <td>
+            {% if ev[7] == sesion_id %}
+            <td style="white-space:nowrap;">
                 <form method="POST" action="{{ url_for('toggle_evento', id_evento=ev[0]) }}" class="inline" style="display:inline;">
                     <button type="submit" class="btn-toggle" title="Cambiar visibilidad">
-                        {% if ev[5] %}Hacer privado{% else %}Publicar para todos{% endif %}
+                        {% if ev[5] %}Hacer privado{% else %}Hacer publico{% endif %}
                     </button>
                 </form>
                 <form method="POST" action="{{ url_for('eliminar_evento', id_evento=ev[0]) }}" class="inline"
@@ -84,6 +89,8 @@
                     <button type="submit" class="btn-eliminar" title="Eliminar">&#10005;</button>
                 </form>
             </td>
+            {% else %}
+            <td></td>
             {% endif %}
         </tr>
         {% endfor %}
@@ -94,11 +101,10 @@
 </table>
 </div>
 
-{% if es_daem %}
 <script>
 document.getElementById('sel-para-todos')?.addEventListener('change', function() {
-    document.getElementById('campo-destino').style.display = this.value === '1' ? 'flex' : 'none';
+    var campo = document.getElementById('campo-destino');
+    if (campo) campo.style.display = this.value === '1' ? 'flex' : 'none';
 });
 </script>
-{% endif %}
 {% endblock %}

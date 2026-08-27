@@ -199,11 +199,21 @@ def dashboard():
                 )
         mensajes_nuevos = cur.fetchone()[0]
 
-        cur.execute(
-            "SELECT titulo, descripcion, fecha, hora FROM Evento "
-            "WHERE fecha >= CURRENT_DATE AND visible_para_todos = TRUE "
-            "ORDER BY fecha ASC LIMIT 5"
-        )
+        if es_daem:
+            cur.execute(
+                "SELECT titulo, descripcion, fecha, hora FROM Evento "
+                "WHERE fecha >= CURRENT_DATE AND id_usuario_creador = %s "
+                "ORDER BY fecha ASC LIMIT 5",
+                (session["id_usuario"],)
+            )
+        else:
+            cur.execute(
+                "SELECT titulo, descripcion, fecha, hora FROM Evento "
+                "WHERE fecha >= CURRENT_DATE "
+                "  AND (visible_para_todos = TRUE OR id_establecimiento_destino = %s) "
+                "ORDER BY fecha ASC LIMIT 5",
+                (id_est,)
+            )
         proximos_eventos = cur.fetchall()
 
         conn.close()
@@ -821,7 +831,7 @@ def calendario():
 
     es_daem = session["usuario"].lower() == "admin_daem"
 
-    if request.method == "POST" and es_daem:
+    if request.method == "POST":
         titulo = request.form.get("titulo", "").strip()
         descripcion = request.form.get("descripcion", "").strip()
         fecha = request.form.get("fecha", "").strip()
@@ -833,7 +843,10 @@ def calendario():
             try:
                 conn = obtener_conexion()
                 cur = conn.cursor()
-                dest_val = int(destino) if destino != "0" else None
+                if es_daem:
+                    dest_val = int(destino) if destino != "0" else None
+                else:
+                    dest_val = session["id_establecimiento"]
                 cur.execute(
                     "INSERT INTO Evento (titulo, descripcion, fecha, hora, id_usuario_creador, visible_para_todos, id_establecimiento_destino) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s)",
@@ -853,15 +866,19 @@ def calendario():
         if es_daem:
             cur.execute(
                 "SELECT e.id_evento, e.titulo, e.descripcion, e.fecha, e.hora, "
-                "e.visible_para_todos, e.id_establecimiento_destino "
+                "e.visible_para_todos, e.id_establecimiento_destino, e.id_usuario_creador "
                 "FROM Evento e WHERE e.id_usuario_creador = %s ORDER BY e.fecha DESC",
                 (session["id_usuario"],)
             )
         else:
             cur.execute(
                 "SELECT e.id_evento, e.titulo, e.descripcion, e.fecha, e.hora, "
-                "e.visible_para_todos, e.id_establecimiento_destino "
-                "FROM Evento e WHERE e.visible_para_todos = TRUE ORDER BY e.fecha DESC"
+                "e.visible_para_todos, e.id_establecimiento_destino, e.id_usuario_creador "
+                "FROM Evento e "
+                "WHERE e.visible_para_todos = TRUE "
+                "   OR e.id_establecimiento_destino = %s "
+                "ORDER BY e.fecha DESC",
+                (session["id_establecimiento"],)
             )
         eventos = cur.fetchall()
         conn.close()
@@ -872,7 +889,8 @@ def calendario():
                            usuario=session["usuario"],
                            es_daem=es_daem,
                            eventos=eventos,
-                           establecimientos=ESTABLECIMIENTOS)
+                           establecimientos=ESTABLECIMIENTOS,
+                           sesion_id=session["id_usuario"])
 
 
 @app.route("/calendario/eliminar/<int:id_evento>", methods=["POST"])
@@ -880,14 +898,11 @@ def eliminar_evento(id_evento):
     if not login_requerido():
         return redirect(url_for("login"))
 
-    es_daem = session["usuario"].lower() == "admin_daem"
-    if not es_daem:
-        return redirect(url_for("dashboard"))
-
     try:
         conn = obtener_conexion()
         cur = conn.cursor()
-        cur.execute("DELETE FROM Evento WHERE id_evento = %s", (id_evento,))
+        cur.execute("DELETE FROM Evento WHERE id_evento = %s AND id_usuario_creador = %s",
+                    (id_evento, session["id_usuario"]))
         conn.commit()
         conn.close()
         flash("Evento eliminado.", "success")
@@ -901,10 +916,6 @@ def eliminar_evento(id_evento):
 def editar_evento(id_evento):
     if not login_requerido():
         return redirect(url_for("login"))
-
-    es_daem = session["usuario"].lower() == "admin_daem"
-    if not es_daem:
-        return redirect(url_for("dashboard"))
 
     titulo = request.form.get("titulo", "").strip()
     descripcion = request.form.get("descripcion", "").strip()
@@ -938,10 +949,6 @@ def toggle_evento(id_evento):
     if not login_requerido():
         return redirect(url_for("login"))
 
-    es_daem = session["usuario"].lower() == "admin_daem"
-    if not es_daem:
-        return redirect(url_for("dashboard"))
-
     try:
         conn = obtener_conexion()
         cur = conn.cursor()
@@ -953,7 +960,7 @@ def toggle_evento(id_evento):
             cur.execute("UPDATE Evento SET visible_para_todos=%s, id_establecimiento_destino=NULL WHERE id_evento=%s",
                         (nuevo, id_evento))
             conn.commit()
-            flash("Evento actualizado." if nuevo else "Evento movido a agenda propia.", "success")
+            flash("Evento actualizado." if nuevo else "Evento movido a agenda privada.", "success")
         else:
             flash("Evento no encontrado.", "danger")
         conn.close()
