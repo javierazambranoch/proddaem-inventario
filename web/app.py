@@ -309,9 +309,6 @@ def inv_guardar():
     ubicacion = request.form.get("ubicacion", "").strip()
     responsable = request.form.get("responsable", "").strip()
     lugar_almacenamiento = request.form.get("lugar_almacenamiento", "").strip()
-    lugar_otro = request.form.get("lugar_otro", "").strip()
-    if lugar_almacenamiento == "otro":
-        lugar_almacenamiento = lugar_otro
     condicion = request.form.get("condicion", "").strip()
     est_filtro = request.form.get("est_filtro", str(session["id_establecimiento"]))
     requiere = request.form.get("requiere", "").strip()

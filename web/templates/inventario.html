@@ -68,15 +68,7 @@
     </div>
     <div class="campo">
         <label>Lugar de almacenamiento</label>
-        <select name="lugar_almacenamiento" id="sel-lugar">
-            <option value="">Seleccionar...</option>
-            <option value="Mueble">Mueble</option>
-            <option value="Casillero">Casillero</option>
-            <option value="Sector">Sector de guardado</option>
-            <option value="otro">Otro (especificar)</option>
-        </select>
-        <input type="text" name="lugar_otro" id="input-lugar-otro" style="display:none; margin-top:6px;"
-               placeholder="Especifica el lugar de guardado...">
+        <input type="text" name="lugar_almacenamiento" placeholder="Ej: Mueble 2, Casillero 5, Sector bodega...">
     </div>
     <div class="campo campo-responsable" id="campo-responsable" style="display:none;">
         <label>Responsable *</label>
@@ -154,11 +146,6 @@ document.getElementById('campo-ubicacion')?.addEventListener('input', function()
     var tiene = this.value.trim().length > 0;
     campo.style.display = tiene ? 'block' : 'none';
     if (tiene) input.focus();
-});
-
-document.getElementById('sel-lugar')?.addEventListener('change', function() {
-    var otro = document.getElementById('input-lugar-otro');
-    if (otro) otro.style.display = this.value === 'otro' ? 'block' : 'none';
 });
 </script>
 {% endblock %}
