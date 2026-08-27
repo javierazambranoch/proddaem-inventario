@@ -1037,6 +1037,34 @@ def editar_evento(id_evento):
 
     return redirect(url_for("calendario"))
 
+
+@app.route("/calendario/toggle/<int:id_evento>", methods=["POST"])
+def toggle_evento(id_evento):
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+    if not es_daem:
+        return redirect(url_for("dashboard"))
+
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        cur.execute("SELECT visible_para_todos FROM Evento WHERE id_evento=%s AND id_usuario_creador=%s",
+                    (id_evento, session["id_usuario"]))
+        row = cur.fetchone()
+        if row:
+            nuevo = not row[0]
+            cur.execute("UPDATE Evento SET visible_para_todos=%s, id_establecimiento_destino=NULL WHERE id_evento=%s",
+                        (nuevo, id_evento))
+            conn.commit()
+            flash("Evento actualizado." if nuevo else "Evento movido a agenda propia.", "success")
+        else:
+            flash("Evento no encontrado.", "danger")
+        conn.close()
+    except Exception as e:
+        flash(f"Error: {e}", "danger")
+
     return redirect(url_for("calendario"))
 
 

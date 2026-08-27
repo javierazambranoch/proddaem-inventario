@@ -57,6 +57,12 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .btn-cancelar { padding: 10px 20px; background: #999; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
 .btn-cancelar:hover { background: #777; }
 
+.badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.badge-todos { background: #e3f2fd; color: #1565c0; }
+.badge-propio { background: #fdecea; color: #c62828; }
+.btn-toggle { background: none; border: 1px solid #1565c0; color: #1565c0; cursor: pointer; font-size: 12px; padding: 4px 10px; border-radius: 5px; margin-right: 6px; }
+.btn-toggle:hover { background: #1565c0; color: #fff; }
+
 .buscador { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .buscador input, .buscador select { padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
 .buscador input { flex: 1; min-width: 200px; }

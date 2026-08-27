@@ -70,16 +70,17 @@
                 {% endif %}
             </td>
             <td>
-                {% if ev[5] %}
-                    {% if ev[6] %}DAEM - Todos{% else %}DAEM - Todos{% endif %}
-                {% else %}
-                    Agenda propia
-                {% endif %}
+                {% if ev[5] %}<span class="badge badge-todos">Todos</span>{% else %}<span class="badge badge-propio">Agenda propia</span>{% endif %}
             </td>
             {% if es_daem %}
             <td>
+                <form method="POST" action="{{ url_for('toggle_evento', id_evento=ev[0]) }}" class="inline" style="display:inline;">
+                    <button type="submit" class="btn-toggle" title="Cambiar visibilidad">
+                        {% if ev[5] %}Hacer privado{% else %}Publicar para todos{% endif %}
+                    </button>
+                </form>
                 <form method="POST" action="{{ url_for('eliminar_evento', id_evento=ev[0]) }}" class="inline"
-                      onsubmit="return confirm('Eliminar evento?')">
+                      onsubmit="return confirm('Eliminar evento?')" style="display:inline;">
                     <button type="submit" class="btn-eliminar" title="Eliminar">&#10005;</button>
                 </form>
             </td>
