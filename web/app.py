@@ -248,13 +248,13 @@ def inventario():
         if es_daem and buscar:
             if est_filtro == "0":
                 cur.execute(
-                    "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable "
+                    "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
                     "FROM Computador WHERE codigo ILIKE %s ORDER BY fecha_registro DESC",
                     (f"%{buscar}%",)
                 )
             else:
                 cur.execute(
-                    "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable "
+                    "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
                     "FROM Computador WHERE codigo ILIKE %s AND id_establecimiento = %s "
                     "ORDER BY fecha_registro DESC",
                     (f"%{buscar}%", est_filtro)
@@ -262,18 +262,18 @@ def inventario():
         elif es_daem:
             if est_filtro == "0":
                 cur.execute(
-                    "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable "
+                    "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
                     "FROM Computador ORDER BY fecha_registro DESC"
                 )
             else:
                 cur.execute(
-                    "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable "
+                    "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
                     "FROM Computador WHERE id_establecimiento = %s ORDER BY fecha_registro DESC",
                     (est_filtro,)
                 )
         else:
             cur.execute(
-                "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable "
+                "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
                 "FROM Computador WHERE id_establecimiento = %s ORDER BY fecha_registro DESC",
                 (id_est,)
             )
@@ -308,6 +308,10 @@ def inv_guardar():
     estado = request.form.get("estado", "").strip()
     ubicacion = request.form.get("ubicacion", "").strip()
     responsable = request.form.get("responsable", "").strip()
+    lugar_almacenamiento = request.form.get("lugar_almacenamiento", "").strip()
+    lugar_otro = request.form.get("lugar_otro", "").strip()
+    if lugar_almacenamiento == "otro":
+        lugar_almacenamiento = lugar_otro
     condicion = request.form.get("condicion", "").strip()
     est_filtro = request.form.get("est_filtro", str(session["id_establecimiento"]))
     requiere = request.form.get("requiere", "").strip()
@@ -329,10 +333,11 @@ def inv_guardar():
         cur.execute(
             """INSERT INTO Computador
             (codigo, categoria, marca, modelo, estado,
-             descripcion_condicion, ubicacion_asignada, responsable, id_establecimiento)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+             descripcion_condicion, ubicacion_asignada, responsable, lugar_almacenamiento, id_establecimiento)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             (codigo, categoria, marca, modelo, estado,
-             condicion if condicion else None, ubicacion, responsable if responsable else None, id_establecimiento)
+             condicion if condicion else None, ubicacion, responsable if responsable else None,
+             lugar_almacenamiento if lugar_almacenamiento else None, id_establecimiento)
         )
 
         solicitud_creada = False
