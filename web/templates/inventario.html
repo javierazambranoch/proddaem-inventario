@@ -142,10 +142,8 @@ document.getElementById('sol-descripcion')?.addEventListener('input', function()
 
 document.getElementById('campo-ubicacion')?.addEventListener('input', function() {
     var campo = document.getElementById('campo-responsable');
-    var input = document.getElementById('input-responsable');
     var tiene = this.value.trim().length > 0;
     campo.style.display = tiene ? 'block' : 'none';
-    if (tiene) input.focus();
 });
 </script>
 {% endblock %}
