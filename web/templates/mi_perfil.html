@@ -10,27 +10,76 @@
 </div>
 
 <h2 style="margin-top:24px; color:#1565c0;">Datos personales</h2>
-<form method="POST" class="formulario">
-    <div class="campo">
-        <label>Nombre completo *</label>
-        <input type="text" name="nombre_completo" required value="{{ perfil.nombre_completo or '' }}" placeholder="Tu nombre completo">
+
+<div class="perfil-item">
+    <div class="perfil-fila">
+        <span class="perfil-label">Nombre completo</span>
+        <span class="perfil-valor">{{ perfil.nombre_completo or 'No definido' }}</span>
+        <button type="button" class="btn-cambiar" onclick="toggleDato('nombre_completo')">Cambiar dato</button>
     </div>
-    <div class="campo">
-        <label>Celular</label>
-        <input type="text" name="celular" value="{{ perfil.celular or '' }}" placeholder="Ej: +56912345678">
+    <form method="POST" class="perfil-editar" id="edit-nombre_completo" style="display:none;">
+        <input type="hidden" name="campo" value="nombre_completo">
+        <input type="text" name="valor" required value="{{ perfil.nombre_completo or '' }}" placeholder="Tu nombre completo">
+        <button type="submit" class="btn-guardar">Guardar</button>
+    </form>
+</div>
+
+<div class="perfil-item">
+    <div class="perfil-fila">
+        <span class="perfil-label">Celular</span>
+        <span class="perfil-valor">{{ perfil.celular or 'No definido' }}</span>
+        <button type="button" class="btn-cambiar" onclick="toggleDato('celular')">Cambiar dato</button>
     </div>
-    <div class="campo">
-        <label>Correo</label>
-        <input type="text" name="correo" value="{{ perfil.correo or '' }}" placeholder="Ej: correo@escuela.cl">
+    <form method="POST" class="perfil-editar" id="edit-celular" style="display:none;">
+        <input type="hidden" name="campo" value="celular">
+        <input type="text" name="valor" value="{{ perfil.celular or '' }}" placeholder="Ej: +56912345678">
+        <button type="submit" class="btn-guardar">Guardar</button>
+    </form>
+</div>
+
+<div class="perfil-item">
+    <div class="perfil-fila">
+        <span class="perfil-label">Correo</span>
+        <span class="perfil-valor">{{ perfil.correo or 'No definido' }}</span>
+        <button type="button" class="btn-cambiar" onclick="toggleDato('correo')">Cambiar dato</button>
     </div>
-    <div class="campo" style="grid-column: 1 / -1;">
-        <label>Dirección</label>
-        <input type="text" name="direccion" value="{{ perfil.direccion or '' }}" placeholder="Dirección">
+    <form method="POST" class="perfil-editar" id="edit-correo" style="display:none;">
+        <input type="hidden" name="campo" value="correo">
+        <input type="text" name="valor" value="{{ perfil.correo or '' }}" placeholder="Ej: correo@escuela.cl">
+        <button type="submit" class="btn-guardar">Guardar</button>
+    </form>
+</div>
+
+<div class="perfil-item">
+    <div class="perfil-fila">
+        <span class="perfil-label">Dirección</span>
+        <span class="perfil-valor">{{ perfil.direccion or 'No definido' }}</span>
+        <button type="button" class="btn-cambiar" onclick="toggleDato('direccion')">Cambiar dato</button>
     </div>
-    <div class="campo" style="grid-column: 1 / -1;">
-        <label>Nueva clave</label>
-        <input type="password" name="clavenueva" placeholder="Dejar vacío si no deseas cambiar la clave">
+    <form method="POST" class="perfil-editar" id="edit-direccion" style="display:none;">
+        <input type="hidden" name="campo" value="direccion">
+        <input type="text" name="valor" value="{{ perfil.direccion or '' }}" placeholder="Dirección">
+        <button type="submit" class="btn-guardar">Guardar</button>
+    </form>
+</div>
+
+<div class="perfil-item">
+    <div class="perfil-fila">
+        <span class="perfil-label">Clave</span>
+        <span class="perfil-valor">••••••••</span>
+        <button type="button" class="btn-cambiar" onclick="toggleDato('clave')">Cambiar dato</button>
     </div>
-    <button type="submit" class="btn-guardar">Guardar Perfil</button>
-</form>
+    <form method="POST" class="perfil-editar" id="edit-clave" style="display:none;">
+        <input type="hidden" name="campo" value="clave">
+        <input type="password" name="clavenueva" required placeholder="Nueva clave">
+        <button type="submit" class="btn-guardar">Guardar</button>
+    </form>
+</div>
+
+<script>
+function toggleDato(id) {
+    var f = document.getElementById('edit-' + id);
+    if (f) f.style.display = (f.style.display === 'none') ? 'flex' : 'none';
+}
+</script>
 {% endblock %}

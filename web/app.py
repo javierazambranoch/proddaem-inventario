@@ -1120,37 +1120,37 @@ def mi_perfil():
     id_est = session["id_establecimiento"]
 
     if request.method == "POST":
-        nombre_completo = request.form.get("nombre_completo", "").strip()
-        celular = request.form.get("celular", "").strip()
-        correo = request.form.get("correo", "").strip()
-        direccion = request.form.get("direccion", "").strip()
+        campo = request.form.get("campo", "").strip()
+        valor = request.form.get("valor", "").strip()
         clavenueva = request.form.get("clavenueva", "").strip()
         try:
             conn = obtener_conexion()
             cur = conn.cursor()
-            cur.execute(
-                "UPDATE Usuario SET nombre_completo=%s, celular=%s, correo=%s, direccion=%s "
-                "WHERE id_usuario=%s",
-                (nombre_completo if nombre_completo else None,
-                 celular if celular else None,
-                 correo if correo else None,
-                 direccion if direccion else None,
-                 session["id_usuario"])
-            )
-            if clavenueva:
-                nuevo_hash = hashlib.sha256(clavenueva.encode()).hexdigest()
-                cur.execute(
-                    "UPDATE Usuario SET clave_hash=%s WHERE id_usuario=%s",
-                    (nuevo_hash, session["id_usuario"])
-                )
+            if campo == "nombre_completo":
+                cur.execute("UPDATE Usuario SET nombre_completo=%s WHERE id_usuario=%s",
+                            (valor if valor else None, session["id_usuario"]))
+                if valor:
+                    session["nombre_display"] = valor
+            elif campo == "celular":
+                cur.execute("UPDATE Usuario SET celular=%s WHERE id_usuario=%s",
+                            (valor if valor else None, session["id_usuario"]))
+            elif campo == "correo":
+                cur.execute("UPDATE Usuario SET correo=%s WHERE id_usuario=%s",
+                            (valor if valor else None, session["id_usuario"]))
+            elif campo == "direccion":
+                cur.execute("UPDATE Usuario SET direccion=%s WHERE id_usuario=%s",
+                            (valor if valor else None, session["id_usuario"]))
+            elif campo == "clave":
+                if clavenueva:
+                    nuevo_hash = hashlib.sha256(clavenueva.encode()).hexdigest()
+                    cur.execute("UPDATE Usuario SET clave_hash=%s WHERE id_usuario=%s",
+                                (nuevo_hash, session["id_usuario"]))
+            else:
+                flash("Campo no valido.", "warning")
+                return redirect(url_for("mi_perfil"))
             conn.commit()
             conn.close()
-            if nombre_completo:
-                session["nombre_display"] = nombre_completo
-            mensaje = "Perfil actualizado."
-            if clavenueva:
-                mensaje += " Clave cambiada."
-            flash(mensaje, "success")
+            flash("Dato actualizado.", "success")
         except Exception as e:
             flash(f"Error: {e}", "danger")
         return redirect(url_for("mi_perfil"))
@@ -1161,7 +1161,7 @@ def mi_perfil():
     try:
         conn = obtener_conexion()
         cur = conn.cursor()
-        cur.execute("SELECT nombre_establecimiento FROM Establecimiento WHERE id_establecimiento = %s", (id_est,))
+        cur.execute("SELECT nombre FROM Establecimiento WHERE id_establecimiento = %s", (id_est,))
         row = cur.fetchone()
         perfil["establecimiento"] = row[0] if row else "DAEM"
         cur.execute(
