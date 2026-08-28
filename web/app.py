@@ -906,7 +906,8 @@ def encargados():
     return render_template("encargados.html",
                            usuario=session["usuario"],
                            encargados=lista,
-                           establecimientos=ESTABLECIMIENTOS)
+                           establecimientos=ESTABLECIMIENTOS,
+                           est_nombres={v: k for k, v in ESTABLECIMIENTOS.items()})
 
 
 @app.route("/calendario", methods=["GET", "POST"])

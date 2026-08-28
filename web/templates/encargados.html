@@ -46,12 +46,8 @@
     </thead>
     <tbody>
         {% for enc in encargados %}
-        {% set est_nombre = '' %}
-        {% for nombre, id in establecimientos.items() %}
-            {% if id == enc[1] %}{% set est_nombre = nombre %}{% endif %}
-        {% endfor %}
         <tr>
-            <td>{{ est_nombre }}</td>
+            <td>{{ est_nombres.get(enc[1], 'Establecimiento ' ~ enc[1]) }}</td>
             <td>{{ enc[2] }}</td>
             <td>{{ enc[3] }}</td>
             <td>{{ enc[4] if enc[4] else '-' }}</td>
