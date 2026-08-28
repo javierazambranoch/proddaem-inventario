@@ -113,6 +113,20 @@ def crear_tabla_eventos():
 crear_tabla_eventos()
 
 
+def crear_columna_baja():
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        cur.execute("ALTER TABLE Computador ADD COLUMN IF NOT EXISTS baja BOOLEAN DEFAULT FALSE")
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print("ERROR CREAR COLUMNA BAJA:", e)
+
+
+crear_columna_baja()
+
+
 @app.route("/")
 def index():
     if login_requerido():
@@ -281,13 +295,13 @@ def inventario():
             if est_filtro == "0":
                 cur.execute(
                     "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
-                    "FROM Computador WHERE codigo ILIKE %s ORDER BY fecha_registro DESC",
+                    "FROM Computador WHERE codigo ILIKE %s AND baja = FALSE ORDER BY fecha_registro DESC",
                     (f"%{buscar}%",)
                 )
             else:
                 cur.execute(
                     "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
-                    "FROM Computador WHERE codigo ILIKE %s AND id_establecimiento = %s "
+                    "FROM Computador WHERE codigo ILIKE %s AND id_establecimiento = %s AND baja = FALSE "
                     "ORDER BY fecha_registro DESC",
                     (f"%{buscar}%", est_filtro)
                 )
@@ -295,18 +309,18 @@ def inventario():
             if est_filtro == "0":
                 cur.execute(
                     "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
-                    "FROM Computador ORDER BY fecha_registro DESC"
+                    "FROM Computador WHERE baja = FALSE ORDER BY fecha_registro DESC"
                 )
             else:
                 cur.execute(
                     "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
-                    "FROM Computador WHERE id_establecimiento = %s ORDER BY fecha_registro DESC",
+                    "FROM Computador WHERE id_establecimiento = %s AND baja = FALSE ORDER BY fecha_registro DESC",
                     (est_filtro,)
                 )
         else:
             cur.execute(
                 "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
-                "FROM Computador WHERE id_establecimiento = %s ORDER BY fecha_registro DESC",
+                "FROM Computador WHERE id_establecimiento = %s AND baja = FALSE ORDER BY fecha_registro DESC",
                 (id_est,)
             )
 
@@ -362,11 +376,12 @@ def inv_guardar():
         cur.execute(
             """INSERT INTO Computador
             (codigo, categoria, marca, modelo, estado,
-             descripcion_condicion, ubicacion_asignada, responsable, lugar_almacenamiento, id_establecimiento)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+             descripcion_condicion, ubicacion_asignada, responsable, lugar_almacenamiento, id_establecimiento, baja)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             (codigo, categoria, marca, modelo, estado,
              condicion if condicion else None, ubicacion, responsable if responsable else None,
-             lugar_almacenamiento if lugar_almacenamiento else None, id_establecimiento)
+             lugar_almacenamiento if lugar_almacenamiento else None, id_establecimiento,
+             True if estado == "malo" else False)
         )
 
         solicitud_creada = False
@@ -375,6 +390,8 @@ def inv_guardar():
             nombre_prod = f"{requiere.capitalize() if requiere else 'Solicitud'} - {categoria} {marca} {modelo}"
             caracts = f"Código: {codigo} | Marca: {marca} | Modelo: {modelo} | Ubicación: {ubicacion}"
             desc = desc_solicitud if desc_solicitud else f"Solicitud automática desde Inventario.\nEquipo: {codigo}\nEstado: {estado}"
+            if estado == "malo":
+                desc = f"{desc}\nEste equipo fue dado de baja automáticamente por estar en estado MALO."
             cur.execute(
                 """INSERT INTO solicitud
                 (nombre_producto, nro_serie, cantidad, caracteristicas,
@@ -437,6 +454,66 @@ def inv_eliminar(codigo):
         flash(f"Error al eliminar: {e}", "danger")
 
     return redirect(url_for("inventario", buscar=request.form.get("buscar", ""), establecimiento=est_filtro))
+
+
+@app.route("/dar_baja", methods=["GET"])
+def dar_baja():
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+    id_est = session["id_establecimiento"]
+    est_filtro = request.args.get("establecimiento", "0")
+    lista = []
+
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        cols = "codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento, descripcion_condicion"
+        if es_daem:
+            if est_filtro == "0":
+                cur.execute(f"SELECT {cols}, id_establecimiento FROM Computador WHERE baja = TRUE ORDER BY fecha_registro DESC")
+            else:
+                cur.execute(f"SELECT {cols}, id_establecimiento FROM Computador WHERE baja = TRUE AND id_establecimiento = %s ORDER BY fecha_registro DESC", (est_filtro,))
+        else:
+            cur.execute(f"SELECT {cols}, id_establecimiento FROM Computador WHERE baja = TRUE AND id_establecimiento = %s ORDER BY fecha_registro DESC", (id_est,))
+        lista = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        flash(f"Error al cargar dar de baja: {e}", "danger")
+
+    return render_template("dar_baja.html",
+                           usuario=session["usuario"],
+                           es_daem=es_daem,
+                           bajas=lista,
+                           est_filtro=est_filtro,
+                           establecimientos=ESTABLECIMIENTOS,
+                           est_nombres={v: k for k, v in ESTABLECIMIENTOS.items()})
+
+
+@app.route("/dar_baja/reincorporar", methods=["POST"])
+def dar_baja_reincorporar():
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    codigo = request.form.get("codigo", "").strip()
+    est_filtro = request.form.get("est_filtro", "0")
+
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE Computador SET baja = FALSE, estado = 'bueno' WHERE codigo = %s",
+            (codigo,)
+        )
+        conn.commit()
+        conn.close()
+        registrar_historial(session["id_usuario"], f"Reincorporación de equipo '{codigo}'")
+        flash(f"Equipo '{codigo}' reincorporado al inventario.", "success")
+    except Exception as e:
+        flash(f"Error al reincorporar: {e}", "danger")
+
+    return redirect(url_for("dar_baja", establecimiento=est_filtro))
 
 
 @app.route("/solicitudes", methods=["GET", "POST"])

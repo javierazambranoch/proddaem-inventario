@@ -15,6 +15,7 @@
         <nav>
             <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}activo{% endif %}">Inicio</a>
             <a href="{{ url_for('inventario') }}" class="{% if request.endpoint == 'inventario' %}activo{% endif %}">Inventario</a>
+            <a href="{{ url_for('dar_baja') }}" class="{% if request.endpoint == 'dar_baja' %}activo{% endif %}">Dar de Baja</a>
             <a href="{{ url_for('solicitudes') }}" class="{% if request.endpoint == 'solicitudes' %}activo{% endif %}">Solicitudes</a>
             <a href="{{ url_for('calendario') }}" class="{% if request.endpoint == 'calendario' %}activo{% endif %}">Calendario</a>
             <a href="{{ url_for('historial') }}" class="{% if request.endpoint == 'historial' %}activo{% endif %}">Historial</a>

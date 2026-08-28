@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block titulo %}ProDaem - Dar de Baja{% endblock %}
+{% block contenido %}
+<h1>Equipos Dados de Baja</h1>
+<p style="color:#666; margin-bottom:16px;">Equipos marcados en estado <strong>Malo</strong> que fueron enviados automáticamente a dar de baja.</p>
+
+{% if es_daem %}
+<form method="GET" class="buscador">
+    <select name="establecimiento">
+        <option value="0" {% if est_filtro == '0' %}selected{% endif %}>DAEM (Todos)</option>
+        {% for nombre, id in establecimientos.items() %}
+        <option value="{{ id }}" {% if est_filtro == id|string %}selected{% endif %}>{{ nombre }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Filtrar</button>
+</form>
+{% endif %}
+
+<div class="tabla-container">
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Categoría</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Estado</th>
+            <th>Ubicación</th>
+            <th>Establecimiento</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in bajas %}
+        <tr>
+            <td>{{ b[0] }}</td>
+            <td>{{ b[1] }}</td>
+            <td>{{ b[2] }}</td>
+            <td>{{ b[3] }}</td>
+            <td><span class="badge badge-malo">{{ b[4] }}</span></td>
+            <td>{{ b[5] }}</td>
+            <td>{{ est_nombres.get(b[9], 'Establecimiento ' ~ b[9]) }}</td>
+            <td class="acciones">
+                <form method="POST" action="{{ url_for('dar_baja_reincorporar') }}" style="display:inline;"
+                      onsubmit="return confirm('¿Reincorporar el equipo {{ b[0] }} al inventario?')">
+                    <input type="hidden" name="codigo" value="{{ b[0] }}">
+                    <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
+                    <button type="submit" class="btn-reactivar">Reincorporar</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        {% if not bajas %}
+        <tr><td colspan="8" class="vacio">No hay equipos dados de baja.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+{% endblock %}
