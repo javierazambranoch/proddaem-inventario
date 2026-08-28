@@ -1143,8 +1143,8 @@ def mi_perfil():
             elif campo == "clave":
                 if clavenueva:
                     nuevo_hash = hashlib.sha256(clavenueva.encode()).hexdigest()
-                    cur.execute("UPDATE Usuario SET clave_hash=%s WHERE id_usuario=%s",
-                                (nuevo_hash, session["id_usuario"]))
+                    cur.execute("UPDATE Usuario SET clave_hash=%s, clave_plana=%s WHERE id_usuario=%s",
+                                (nuevo_hash, clavenueva, session["id_usuario"]))
             else:
                 flash("Campo no valido.", "warning")
                 return redirect(url_for("mi_perfil"))
@@ -1165,14 +1165,11 @@ def mi_perfil():
         row = cur.fetchone()
         perfil["establecimiento"] = row[0] if row else "DAEM"
         cur.execute(
-            "SELECT nombre_completo, celular, correo, direccion, encargado_nombre FROM ("
-            "  SELECT u.nombre_completo, u.celular, u.correo, u.direccion, "
-            "         (SELECT e.nombre FROM Encargado e WHERE e.id_establecimiento = u.id_establecimiento ORDER BY e.id_encargado LIMIT 1) AS encargado_nombre "
-            "  FROM Usuario u WHERE u.id_usuario = %s"
-            ") sub",
+            "SELECT nombre_completo, celular, correo, direccion, clave_plana FROM Usuario "
+            "WHERE id_usuario = %s",
             (session["id_usuario"],)
         )
-        perfil.update(dict(zip(["nombre_completo", "celular", "correo", "direccion", "encargado_nombre"], cur.fetchone())))
+        perfil.update(dict(zip(["nombre_completo", "celular", "correo", "direccion", "clave_plana"], cur.fetchone())))
         conn.close()
     except Exception as e:
         flash(f"Error: {e}", "danger")

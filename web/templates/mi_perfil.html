@@ -66,8 +66,9 @@
 <div class="perfil-item">
     <div class="perfil-fila">
         <span class="perfil-label">Clave</span>
-        <span class="perfil-valor">••••••••</span>
-        <button type="button" class="btn-cambiar" onclick="toggleDato('clave')">Cambiar dato</button>
+        <span class="perfil-valor" id="clave-actual" data-clave="{{ perfil.clave_plana or '' }}">••••••••</span>
+        <button type="button" class="btn-cambiar" onclick="verClave()">Ver clave</button>
+        <button type="button" class="btn-cambiar" onclick="toggleDato('clave')">Cambiar clave</button>
     </div>
     <form method="POST" class="perfil-editar" id="edit-clave" style="display:none;">
         <input type="hidden" name="campo" value="clave">
@@ -80,6 +81,12 @@
 function toggleDato(id) {
     var f = document.getElementById('edit-' + id);
     if (f) f.style.display = (f.style.display === 'none') ? 'flex' : 'none';
+}
+function verClave() {
+    var el = document.getElementById('clave-actual');
+    if (el.dataset.clave) {
+        el.textContent = (el.textContent === '••••••••') ? el.dataset.clave : '••••••••';
+    }
 }
 </script>
 {% endblock %}
