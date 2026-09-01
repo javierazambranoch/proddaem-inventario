@@ -4,8 +4,12 @@
 <h1>Historial de Actividades</h1>
 
 <div class="filtro-historial">
+    {% if es_daem %}
     <a href="{{ url_for('historial', filtro='Todos') }}" class="{% if filtro == 'Todos' %}activo{% endif %}">Todos</a>
     <a href="{{ url_for('historial', filtro='Mis actividades') }}" class="{% if filtro == 'Mis actividades' %}activo{% endif %}">Mis actividades</a>
+    {% else %}
+    <a href="{{ url_for('historial', filtro='Mis actividades') }}" class="activo">Mis actividades</a>
+    {% endif %}
 </div>
 
 <table class="tabla">

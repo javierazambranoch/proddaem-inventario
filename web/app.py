@@ -1022,41 +1022,29 @@ def historial():
 
     es_daem = session["usuario"].lower() == "admin_daem"
     id_usuario = session["id_usuario"]
-    id_est = session["id_establecimiento"]
-    filtro = request.args.get("filtro", "Todos" if es_daem else "Mis actividades")
-    lic_ubic = request.args.get("lic_ubic", "todo").strip().lower()
-    liceo_mode = id_est == EST_LICEO
+    # Establecimientos: solo "Mis actividades". DAEM: "Todos" o "Mis actividades".
+    if es_daem:
+        filtro = request.args.get("filtro", "Todos")
+    else:
+        filtro = "Mis actividades"
     registros = []
 
     try:
         conn = obtener_conexion()
         cur = conn.cursor()
-
-        sel = ("SELECT h.id_historial, u.nombre_usuario, h.accion, h.fecha_hora "
-               "FROM Historial h LEFT JOIN Usuario u ON h.id_usuario = u.id_usuario")
-        conds = []
-        params = []
-
-        if not (es_daem and filtro == "Todos"):
-            conds.append("h.id_usuario = %s")
-            params.append(id_usuario)
-
-        if liceo_mode and lic_ubic in ("hc", "tp"):
+        if es_daem and filtro == "Todos":
             cur.execute(
-                "SELECT codigo FROM Computador WHERE id_establecimiento = %s AND ubicacion_asignada ILIKE %s",
-                (id_est, f"%{lic_ubic}%")
+                "SELECT h.id_historial, u.nombre_usuario, h.accion, h.fecha_hora "
+                "FROM Historial h LEFT JOIN Usuario u ON h.id_usuario = u.id_usuario "
+                "ORDER BY h.fecha_hora DESC"
             )
-            codigos = [r[0] for r in cur.fetchall()]
-            if codigos:
-                ors = " OR ".join(["h.accion ILIKE %s"] * len(codigos))
-                conds.append(f"({ors})")
-                params.extend([f"%{c}%"] for c in codigos)  # placeholder; fix below
-
-        if conds:
-            sql = sel + " WHERE " + " AND ".join(conds) + " ORDER BY h.fecha_hora DESC"
         else:
-            sql = sel + " ORDER BY h.fecha_hora DESC"
-        cur.execute(sql, params)
+            cur.execute(
+                "SELECT h.id_historial, u.nombre_usuario, h.accion, h.fecha_hora "
+                "FROM Historial h LEFT JOIN Usuario u ON h.id_usuario = u.id_usuario "
+                "WHERE h.id_usuario = %s ORDER BY h.fecha_hora DESC",
+                (id_usuario,)
+            )
         registros = cur.fetchall()
         conn.close()
 
@@ -1067,9 +1055,7 @@ def historial():
                            usuario=session["usuario"],
                            es_daem=es_daem,
                            registros=registros,
-                           filtro=filtro,
-                           liceo_mode=liceo_mode,
-                           lic_ubic=lic_ubic)
+                           filtro=filtro)
 
 
 @app.route("/encargados", methods=["GET", "POST"])
