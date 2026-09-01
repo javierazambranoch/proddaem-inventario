@@ -26,7 +26,6 @@
         {% endif %}
         <label style="font-weight:600; color:#1565c0;">Filtrar por ubicación:</label>
         <select name="ubic" onchange="this.form.submit()">
-            <option value="" {% if filtro_ubic == '' %}selected{% endif %}>Todas</option>
             <option value="hc" {% if filtro_ubic == 'hc' %}selected{% endif %}>HC</option>
             <option value="tp" {% if filtro_ubic == 'tp' %}selected{% endif %}>TP</option>
         </select>

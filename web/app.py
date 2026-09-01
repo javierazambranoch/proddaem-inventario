@@ -290,6 +290,9 @@ def inventario():
     est_filtro = request.args.get("establecimiento", "0")
     filtro_ubic = request.args.get("ubic", "").strip().lower()
     liceo_mode = (est_filtro == str(EST_LICEO)) if es_daem else (id_est == EST_LICEO)
+    if liceo_mode and filtro_ubic not in ("hc", "tp"):
+        filtro_ubic = "hc"
+    equipos = []
 
     try:
         conn = obtener_conexion()
@@ -459,6 +462,8 @@ def dar_baja():
     est_filtro = request.args.get("establecimiento", "0")
     filtro_ubic = request.args.get("ubic", "").strip().lower()
     liceo_mode = (est_filtro == str(EST_LICEO)) if es_daem else (id_est == EST_LICEO)
+    if liceo_mode and filtro_ubic not in ("hc", "tp"):
+        filtro_ubic = "hc"
     lista = []
 
     try:
