@@ -465,6 +465,7 @@ def dar_baja():
     if liceo_mode and filtro_ubic not in ("hc", "tp"):
         filtro_ubic = "hc"
     lista = []
+    operativos = []
 
     try:
         conn = obtener_conexion()
@@ -485,6 +486,19 @@ def dar_baja():
         sql = (f"SELECT {cols}, id_establecimiento FROM Computador WHERE " + " AND ".join(condiciones) + " ORDER BY fecha_registro DESC")
         cur.execute(sql, params)
         lista = cur.fetchall()
+
+        cond_op = ["baja = FALSE"]
+        params_op = []
+        if es_daem and est_filtro != "0":
+            cond_op.append("id_establecimiento = %s")
+            params_op.append(est_filtro)
+        if not es_daem:
+            cond_op.append("id_establecimiento = %s")
+            params_op.append(id_est)
+        sql_op = ("SELECT codigo, categoria, marca, modelo, ubicacion_asignada FROM Computador WHERE "
+                  + " AND ".join(cond_op) + " ORDER BY fecha_registro DESC")
+        cur.execute(sql_op, params_op)
+        operativos = cur.fetchall()
         conn.close()
     except Exception as e:
         flash(f"Error al cargar dar de baja: {e}", "danger")
@@ -493,11 +507,66 @@ def dar_baja():
                            usuario=session["usuario"],
                            es_daem=es_daem,
                            bajas=lista,
+                           operativos=operativos,
                            est_filtro=est_filtro,
                            establecimientos=ESTABLECIMIENTOS,
                            est_nombres={v: k for k, v in ESTABLECIMIENTOS.items()},
                            filtro_ubic=filtro_ubic,
                            liceo_mode=liceo_mode)
+
+
+@app.route("/dar_baja/manual", methods=["POST"])
+def dar_baja_manual():
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    codigo = request.form.get("codigo", "").strip()
+    motivo = request.form.get("motivo", "").strip()
+    est_filtro = request.form.get("est_filtro", "0")
+
+    if not codigo:
+        flash("Selecciona un equipo.", "warning")
+        return redirect(url_for("dar_baja", establecimiento=est_filtro))
+
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        cur.execute("SELECT descripcion_condicion FROM Computador WHERE codigo = %s", (codigo,))
+        fila = cur.fetchone()
+        desc_actual = fila[0] if fila and fila[0] else ""
+        nueva_desc = f"Dar de baja manual. Motivo: {motivo}" if motivo else "Dar de baja manual."
+        if desc_actual:
+            nueva_desc = f"{desc_actual} | {nueva_desc}"
+        cur.execute(
+            "UPDATE Computador SET baja = TRUE, estado = 'malo', descripcion_condicion = %s WHERE codigo = %s",
+            (nueva_desc, codigo)
+        )
+        # Crear solicitud automatica de alta prioridad por la baja
+        cur.execute(
+            "SELECT categoria, marca, modelo, id_establecimiento FROM Computador WHERE codigo = %s",
+            (codigo,)
+        )
+        eq = cur.fetchone()
+        if eq:
+            nombre_prod = f"Reposicion - {eq[0]} {eq[1]} {eq[2]}"
+            caracts = f"Código: {codigo} | Marca: {eq[1]} | Modelo: {eq[2]}"
+            desc = f"Baja manual del equipo {codigo}. Motivo: {motivo}" if motivo else f"Baja manual del equipo {codigo}."
+            cur.execute(
+                """INSERT INTO solicitud
+                (nombre_producto, nro_serie, cantidad, caracteristicas,
+                 estado, descripcion, prioridad, id_usuario, id_establecimiento, notif_cambio)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                (nombre_prod, codigo, 1, caracts, "pendiente", desc, "alta",
+                 session["id_usuario"], eq[3], True)
+            )
+        conn.commit()
+        conn.close()
+        registrar_historial(session["id_usuario"], f"Baja manual del equipo '{codigo}'")
+        flash(f"Equipo '{codigo}' dado de baja.", "success")
+    except Exception as e:
+        flash(f"Error al dar de baja: {e}", "danger")
+
+    return redirect(url_for("dar_baja", establecimiento=est_filtro))
 
 
 @app.route("/dar_baja/reincorporar", methods=["POST"])
