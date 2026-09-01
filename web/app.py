@@ -18,6 +18,8 @@ ESTABLECIMIENTOS = {
     "Escuela Toqui Lautaro": 5
 }
 
+EST_LICEO = 4
+
 NOMBRES_DISPLAY = {
     "admin_liceo": "Victor Pinto",
     "admin_saber": "Victor Pinto",
@@ -287,6 +289,7 @@ def inventario():
     buscar = request.args.get("buscar", "").strip()
     est_filtro = request.args.get("establecimiento", "0")
     filtro_ubic = request.args.get("ubic", "").strip().lower()
+    liceo_mode = (est_filtro == str(EST_LICEO)) if es_daem else (id_est == EST_LICEO)
 
     try:
         conn = obtener_conexion()
@@ -325,7 +328,8 @@ def inventario():
                            buscar=buscar,
                            est_filtro=est_filtro,
                            establecimientos=ESTABLECIMIENTOS,
-                           filtro_ubic=filtro_ubic)
+                           filtro_ubic=filtro_ubic,
+                           liceo_mode=liceo_mode)
 
 
 @app.route("/inventario/guardar", methods=["POST"])
@@ -454,6 +458,7 @@ def dar_baja():
     id_est = session["id_establecimiento"]
     est_filtro = request.args.get("establecimiento", "0")
     filtro_ubic = request.args.get("ubic", "").strip().lower()
+    liceo_mode = (est_filtro == str(EST_LICEO)) if es_daem else (id_est == EST_LICEO)
     lista = []
 
     try:
@@ -486,7 +491,8 @@ def dar_baja():
                            est_filtro=est_filtro,
                            establecimientos=ESTABLECIMIENTOS,
                            est_nombres={v: k for k, v in ESTABLECIMIENTOS.items()},
-                           filtro_ubic=filtro_ubic)
+                           filtro_ubic=filtro_ubic,
+                           liceo_mode=liceo_mode)
 
 
 @app.route("/dar_baja/reincorporar", methods=["POST"])

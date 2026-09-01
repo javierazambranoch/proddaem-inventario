@@ -12,11 +12,12 @@
         <option value="{{ id }}" {% if est_filtro == id|string %}selected{% endif %}>{{ nombre }}</option>
         {% endfor %}
     </select>
-    <input type="hidden" name="ubic" value="{{ filtro_ubic }}">
+    {% if liceo_mode %}<input type="hidden" name="ubic" value="{{ filtro_ubic }}">{% endif %}
     <button type="submit">Filtrar</button>
 </form>
 {% endif %}
 
+{% if liceo_mode %}
 <div class="buscador filtro-ubic">
     <form method="GET" style="display:flex; gap:8px; align-items:center;">
         {% if es_daem %}
@@ -30,6 +31,7 @@
         </select>
     </form>
 </div>
+{% endif %}
 
 <div class="tabla-container">
 <table class="tabla">
