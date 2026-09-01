@@ -33,19 +33,63 @@
 {% endif %}
 
 <div class="perfil-info" style="margin-bottom:20px;">
-    <strong style="color:#1565c0;">Dar de baja un equipo</strong>
-    <form method="POST" action="{{ url_for('dar_baja_manual') }}" style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; align-items:center;">
+    <strong style="color:#1565c0;">Registrar un equipo</strong>
+    <p style="font-size:12px; color:#666; margin:6px 0 12px 0;">Conectado al inventario: si el estado es <strong>Malo</strong>, el equipo se enviará automáticamente a dar de baja.</p>
+    <form method="POST" action="{{ url_for('inv_guardar') }}" class="formulario">
+        <input type="hidden" name="origen" value="dar_baja">
         <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
-        <select name="codigo" required style="padding:8px 10px; border:1px solid #ccc; border-radius:5px; flex:1; min-width:220px;">
-            <option value="">Selecciona un equipo operativo...</option>
-            {% for op in operativos %}
-            <option value="{{ op[0] }}">{{ op[0] }} - {{ op[1] }} {{ op[2] }} {{ op[3] }}</option>
-            {% endfor %}
-        </select>
-        <input type="text" name="motivo" placeholder="Motivo de la baja (opcional)" style="padding:8px 10px; border:1px solid #ccc; border-radius:5px; flex:1; min-width:200px;">
-        <button type="submit" class="btn-eliminar" style="background:#c62828;">Dar de Baja</button>
+        <input type="hidden" name="requiere" id="sol-requiere-hidden" value="">
+        <input type="hidden" name="desc_solicitud" id="sol-desc-hidden" value="">
+        <div class="campo">
+            <label>Código *</label>
+            <input type="text" name="codigo" required>
+        </div>
+        <div class="campo">
+            <label>Categoría *</label>
+            <input type="text" name="categoria" required placeholder="Ej: Computador, Monitor, Tablet...">
+        </div>
+        <div class="campo">
+            <label>Marca *</label>
+            <input type="text" name="marca" required>
+        </div>
+        <div class="campo">
+            <label>Modelo *</label>
+            <input type="text" name="modelo" required>
+        </div>
+        <div class="campo">
+            <label>Estado *</label>
+            <select name="estado" id="sel-estado" required>
+                <option value="bueno">Bueno</option>
+                <option value="regular">Regular</option>
+                <option value="malo">Malo</option>
+            </select>
+        </div>
+        <div class="campo campo-condicion" id="campo-condicion" style="display:none;">
+            <label>Descripcion del estado</label>
+            <textarea name="condicion" rows="2" placeholder="Describe el estado del equipo..."></textarea>
+        </div>
+        <div id="panel-solicitud" style="display:none; grid-column: 1 / -1; background:#e3f2fd; padding:16px; border-radius:8px; margin-top:8px;">
+            <strong style="color:#1565c0;">Se creara una solicitud automatica</strong>
+            <p id="nota-baja" style="display:none; font-size:12px; color:#c62828; margin:6px 0 12px 0;"><strong>Aviso:</strong> al estar en estado Malo, el equipo se enviará automáticamente a <strong>Dar de Baja</strong>.</p>
+            <div class="campo">
+                <label>Requiere *</label>
+                <input type="text" id="sol-requiere" placeholder="Ej: Mantencion, Reposicion...">
+            </div>
+            <div class="campo" style="grid-column: 1 / -1;">
+                <label>Descripcion del estado</label>
+                <textarea id="sol-descripcion" rows="2" placeholder="Describe el estado del equipo..."></textarea>
+            </div>
+        </div>
+        <div class="campo">
+            <label>Ubicación *</label>
+            <input type="text" name="ubicacion" placeholder="Ej: Sala 3">
+        </div>
+        <div class="campo">
+            <label>Lugar de almacenamiento</label>
+            <input type="text" name="lugar_almacenamiento" placeholder="Ej: Mueble 2, Casillero 5, Sector bodega...">
+        </div>
+        <button type="submit" class="btn-guardar">Guardar Equipo</button>
     </form>
-    <p style="font-size:12px; color:#666; margin-top:8px;">El equipo seleccionado dejará de aparecer en el inventario operativo, se generará una solicitud de reposición y podrás responderle al establecimiento desde aquí.</p>
 </div>
 
 <div class="tabla-container">
@@ -120,4 +164,24 @@ function abrirRespuesta(codigo, est) {
 }
 </script>
 {% endif %}
+
+<script>
+document.getElementById('sel-estado')?.addEventListener('change', function() {
+    var c = document.getElementById('campo-condicion');
+    var p = document.getElementById('panel-solicitud');
+    var nota = document.getElementById('nota-baja');
+    var val = this.value;
+    c.style.display = (val === 'regular' || val === 'malo') ? 'block' : 'none';
+    p.style.display = (val === 'regular' || val === 'malo') ? 'grid' : 'none';
+    if (nota) nota.style.display = (val === 'malo') ? 'block' : 'none';
+});
+
+document.getElementById('sol-requiere')?.addEventListener('input', function() {
+    document.getElementById('sol-requiere-hidden').value = this.value;
+});
+
+document.getElementById('sol-descripcion')?.addEventListener('input', function() {
+    document.getElementById('sol-desc-hidden').value = this.value;
+});
+</script>
 {% endblock %}
