@@ -38,8 +38,6 @@
     <form method="POST" action="{{ url_for('inv_guardar') }}" class="formulario">
         <input type="hidden" name="origen" value="dar_baja">
         <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
-        <input type="hidden" name="requiere" id="sol-requiere-hidden" value="">
-        <input type="hidden" name="desc_solicitud" id="sol-desc-hidden" value="">
         <div class="campo">
             <label>Código *</label>
             <input type="text" name="codigo" required>
@@ -57,28 +55,9 @@
             <input type="text" name="modelo" required>
         </div>
         <div class="campo">
-            <label>Estado *</label>
-            <select name="estado" id="sel-estado" required>
-                <option value="malo" selected>Malo</option>
-                <option value="regular">Regular</option>
-                <option value="bueno">Bueno</option>
-            </select>
-        </div>
-        <div class="campo campo-condicion" id="campo-condicion" style="display:block;">
-            <label>Descripcion del estado</label>
-            <textarea name="condicion" rows="2" placeholder="Describe el estado del equipo..."></textarea>
-        </div>
-        <div id="panel-solicitud" style="display:grid; grid-column: 1 / -1; background:#e3f2fd; padding:16px; border-radius:8px; margin-top:8px;">
-            <strong style="color:#1565c0;">Se creara una solicitud automatica</strong>
-            <p id="nota-baja" style="display:block; font-size:12px; color:#c62828; margin:6px 0 12px 0;"><strong>Aviso:</strong> al estar en estado Malo, el equipo se enviará automáticamente a <strong>Dar de Baja</strong>.</p>
-            <div class="campo">
-                <label>Requiere *</label>
-                <input type="text" id="sol-requiere" placeholder="Ej: Mantencion, Reposicion...">
-            </div>
-            <div class="campo" style="grid-column: 1 / -1;">
-                <label>Descripcion del estado</label>
-                <textarea id="sol-descripcion" rows="2" placeholder="Describe el estado del equipo..."></textarea>
-            </div>
+            <label>Estado</label>
+            <input type="text" value="Malo" disabled>
+            <input type="hidden" name="estado" value="malo">
         </div>
         <div class="campo">
             <label>Ubicación *</label>
@@ -170,24 +149,6 @@ function abrirRespuesta(codigo, est) {
 {% endif %}
 
 <script>
-document.getElementById('sel-estado')?.addEventListener('change', function() {
-    var c = document.getElementById('campo-condicion');
-    var p = document.getElementById('panel-solicitud');
-    var nota = document.getElementById('nota-baja');
-    var val = this.value;
-    c.style.display = (val === 'regular' || val === 'malo') ? 'block' : 'none';
-    p.style.display = (val === 'regular' || val === 'malo') ? 'grid' : 'none';
-    if (nota) nota.style.display = (val === 'malo') ? 'block' : 'none';
-});
-
-document.getElementById('sol-requiere')?.addEventListener('input', function() {
-    document.getElementById('sol-requiere-hidden').value = this.value;
-});
-
-document.getElementById('sol-descripcion')?.addEventListener('input', function() {
-    document.getElementById('sol-desc-hidden').value = this.value;
-});
-
 document.getElementById('campo-ubicacion')?.addEventListener('input', function() {
     var campo = document.getElementById('campo-responsable');
     var tiene = this.value.trim().length > 0;
