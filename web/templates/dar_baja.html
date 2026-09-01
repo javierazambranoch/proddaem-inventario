@@ -82,11 +82,15 @@
         </div>
         <div class="campo">
             <label>Ubicación *</label>
-            <input type="text" name="ubicacion" placeholder="Ej: Sala 3">
+            <input type="text" name="ubicacion" id="campo-ubicacion" placeholder="Ej: Sala 3">
         </div>
         <div class="campo">
             <label>Lugar de almacenamiento</label>
             <input type="text" name="lugar_almacenamiento" placeholder="Ej: Mueble 2, Casillero 5, Sector bodega...">
+        </div>
+        <div class="campo campo-responsable" id="campo-responsable" style="display:none;">
+            <label>Responsable *</label>
+            <input type="text" name="responsable" id="input-responsable" placeholder="Quien quedo a cargo del producto">
         </div>
         <button type="submit" class="btn-guardar">Guardar Equipo</button>
     </form>
@@ -182,6 +186,12 @@ document.getElementById('sol-requiere')?.addEventListener('input', function() {
 
 document.getElementById('sol-descripcion')?.addEventListener('input', function() {
     document.getElementById('sol-desc-hidden').value = this.value;
+});
+
+document.getElementById('campo-ubicacion')?.addEventListener('input', function() {
+    var campo = document.getElementById('campo-responsable');
+    var tiene = this.value.trim().length > 0;
+    campo.style.display = tiene ? 'block' : 'none';
 });
 </script>
 {% endblock %}
