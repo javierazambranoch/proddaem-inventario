@@ -59,18 +59,18 @@
         <div class="campo">
             <label>Estado *</label>
             <select name="estado" id="sel-estado" required>
-                <option value="bueno">Bueno</option>
+                <option value="malo" selected>Malo</option>
                 <option value="regular">Regular</option>
-                <option value="malo">Malo</option>
+                <option value="bueno">Bueno</option>
             </select>
         </div>
-        <div class="campo campo-condicion" id="campo-condicion" style="display:none;">
+        <div class="campo campo-condicion" id="campo-condicion" style="display:block;">
             <label>Descripcion del estado</label>
             <textarea name="condicion" rows="2" placeholder="Describe el estado del equipo..."></textarea>
         </div>
-        <div id="panel-solicitud" style="display:none; grid-column: 1 / -1; background:#e3f2fd; padding:16px; border-radius:8px; margin-top:8px;">
+        <div id="panel-solicitud" style="display:grid; grid-column: 1 / -1; background:#e3f2fd; padding:16px; border-radius:8px; margin-top:8px;">
             <strong style="color:#1565c0;">Se creara una solicitud automatica</strong>
-            <p id="nota-baja" style="display:none; font-size:12px; color:#c62828; margin:6px 0 12px 0;"><strong>Aviso:</strong> al estar en estado Malo, el equipo se enviará automáticamente a <strong>Dar de Baja</strong>.</p>
+            <p id="nota-baja" style="display:block; font-size:12px; color:#c62828; margin:6px 0 12px 0;"><strong>Aviso:</strong> al estar en estado Malo, el equipo se enviará automáticamente a <strong>Dar de Baja</strong>.</p>
             <div class="campo">
                 <label>Requiere *</label>
                 <input type="text" id="sol-requiere" placeholder="Ej: Mantencion, Reposicion...">
