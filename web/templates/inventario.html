@@ -12,9 +12,25 @@
         <option value="{{ id }}" {% if est_filtro == id|string %}selected{% endif %}>{{ nombre }}</option>
         {% endfor %}
     </select>
+    <input type="hidden" name="ubic" value="{{ filtro_ubic }}">
     <button type="submit">Buscar</button>
 </form>
 {% endif %}
+
+<div class="buscador filtro-ubic">
+    <form method="GET" style="display:flex; gap:8px; align-items:center;">
+        {% if es_daem %}
+        <input type="hidden" name="buscar" value="{{ buscar }}">
+        <input type="hidden" name="establecimiento" value="{{ est_filtro }}">
+        {% endif %}
+        <label style="font-weight:600; color:#1565c0;">Filtrar por ubicación:</label>
+        <select name="ubic" onchange="this.form.submit()">
+            <option value="" {% if filtro_ubic == '' %}selected{% endif %}>Todas</option>
+            <option value="hc" {% if filtro_ubic == 'hc' %}selected{% endif %}>HC</option>
+            <option value="tp" {% if filtro_ubic == 'tp' %}selected{% endif %}>TP</option>
+        </select>
+    </form>
+</div>
 
 {% if not es_daem %}
 <form method="POST" action="{{ url_for('inv_guardar') }}" class="formulario">

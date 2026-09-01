@@ -286,44 +286,32 @@ def inventario():
     equipos = []
     buscar = request.args.get("buscar", "").strip()
     est_filtro = request.args.get("establecimiento", "0")
+    filtro_ubic = request.args.get("ubic", "").strip().lower()
 
     try:
         conn = obtener_conexion()
         cur = conn.cursor()
 
-        if es_daem and buscar:
-            if est_filtro == "0":
-                cur.execute(
-                    "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
-                    "FROM Computador WHERE codigo ILIKE %s AND baja = FALSE ORDER BY fecha_registro DESC",
-                    (f"%{buscar}%",)
-                )
-            else:
-                cur.execute(
-                    "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
-                    "FROM Computador WHERE codigo ILIKE %s AND id_establecimiento = %s AND baja = FALSE "
-                    "ORDER BY fecha_registro DESC",
-                    (f"%{buscar}%", est_filtro)
-                )
-        elif es_daem:
-            if est_filtro == "0":
-                cur.execute(
-                    "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
-                    "FROM Computador WHERE baja = FALSE ORDER BY fecha_registro DESC"
-                )
-            else:
-                cur.execute(
-                    "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
-                    "FROM Computador WHERE id_establecimiento = %s AND baja = FALSE ORDER BY fecha_registro DESC",
-                    (est_filtro,)
-                )
+        condiciones = ["baja = FALSE"]
+        params = []
+        if buscar:
+            condiciones.append("codigo ILIKE %s")
+            params.append(f"%{buscar}%")
+        if es_daem:
+            if est_filtro != "0":
+                condiciones.append("id_establecimiento = %s")
+                params.append(est_filtro)
         else:
-            cur.execute(
-                "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
-                "FROM Computador WHERE id_establecimiento = %s AND baja = FALSE ORDER BY fecha_registro DESC",
-                (id_est,)
-            )
+            condiciones.append("id_establecimiento = %s")
+            params.append(id_est)
+        if filtro_ubic == "hc":
+            condiciones.append("ubicacion_asignada ILIKE '%%hc%%'")
+        elif filtro_ubic == "tp":
+            condiciones.append("ubicacion_asignada ILIKE '%%tp%%'")
 
+        sql = ("SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento "
+               "FROM Computador WHERE " + " AND ".join(condiciones) + " ORDER BY fecha_registro DESC")
+        cur.execute(sql, params)
         equipos = cur.fetchall()
         conn.close()
 
@@ -336,7 +324,8 @@ def inventario():
                            equipos=equipos,
                            buscar=buscar,
                            est_filtro=est_filtro,
-                           establecimientos=ESTABLECIMIENTOS)
+                           establecimientos=ESTABLECIMIENTOS,
+                           filtro_ubic=filtro_ubic)
 
 
 @app.route("/inventario/guardar", methods=["POST"])
@@ -464,19 +453,27 @@ def dar_baja():
     es_daem = session["usuario"].lower() == "admin_daem"
     id_est = session["id_establecimiento"]
     est_filtro = request.args.get("establecimiento", "0")
+    filtro_ubic = request.args.get("ubic", "").strip().lower()
     lista = []
 
     try:
         conn = obtener_conexion()
         cur = conn.cursor()
         cols = "codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable, lugar_almacenamiento, descripcion_condicion"
-        if es_daem:
-            if est_filtro == "0":
-                cur.execute(f"SELECT {cols}, id_establecimiento FROM Computador WHERE baja = TRUE ORDER BY fecha_registro DESC")
-            else:
-                cur.execute(f"SELECT {cols}, id_establecimiento FROM Computador WHERE baja = TRUE AND id_establecimiento = %s ORDER BY fecha_registro DESC", (est_filtro,))
-        else:
-            cur.execute(f"SELECT {cols}, id_establecimiento FROM Computador WHERE baja = TRUE AND id_establecimiento = %s ORDER BY fecha_registro DESC", (id_est,))
+        condiciones = ["baja = TRUE"]
+        params = []
+        if es_daem and est_filtro != "0":
+            condiciones.append("id_establecimiento = %s")
+            params.append(est_filtro)
+        if not es_daem:
+            condiciones.append("id_establecimiento = %s")
+            params.append(id_est)
+        if filtro_ubic == "hc":
+            condiciones.append("ubicacion_asignada ILIKE '%%hc%%'")
+        elif filtro_ubic == "tp":
+            condiciones.append("ubicacion_asignada ILIKE '%%tp%%'")
+        sql = (f"SELECT {cols}, id_establecimiento FROM Computador WHERE " + " AND ".join(condiciones) + " ORDER BY fecha_registro DESC")
+        cur.execute(sql, params)
         lista = cur.fetchall()
         conn.close()
     except Exception as e:
@@ -488,7 +485,8 @@ def dar_baja():
                            bajas=lista,
                            est_filtro=est_filtro,
                            establecimientos=ESTABLECIMIENTOS,
-                           est_nombres={v: k for k, v in ESTABLECIMIENTOS.items()})
+                           est_nombres={v: k for k, v in ESTABLECIMIENTOS.items()},
+                           filtro_ubic=filtro_ubic)
 
 
 @app.route("/dar_baja/reincorporar", methods=["POST"])
@@ -512,6 +510,41 @@ def dar_baja_reincorporar():
         flash(f"Equipo '{codigo}' reincorporado al inventario.", "success")
     except Exception as e:
         flash(f"Error al reincorporar: {e}", "danger")
+
+    return redirect(url_for("dar_baja", establecimiento=est_filtro))
+
+
+@app.route("/dar_baja/responder", methods=["POST"])
+def dar_baja_responder():
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    codigo = request.form.get("codigo", "").strip()
+    id_establecimiento = request.form.get("id_establecimiento", "").strip()
+    mensaje = request.form.get("mensaje", "").strip()
+    est_filtro = request.form.get("est_filtro", "0")
+
+    if not mensaje:
+        flash("Escribe una respuesta.", "warning")
+        return redirect(url_for("dar_baja", establecimiento=est_filtro))
+
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        texto = f"[Dar de Baja - Equipo {codigo}] {mensaje}"
+        cur.execute(
+            "INSERT INTO Mensaje (id_usuario, mensaje, id_establecimiento_destino, fecha_hora) "
+            "VALUES (%s, %s, %s, %s)",
+            (session["id_usuario"], texto,
+             int(id_establecimiento) if id_establecimiento else None,
+             datetime.now())
+        )
+        conn.commit()
+        conn.close()
+        registrar_historial(session["id_usuario"], f"Respuesta por equipo dado de baja '{codigo}'")
+        flash(f"Respuesta enviada al establecimiento.", "success")
+    except Exception as e:
+        flash(f"Error al enviar respuesta: {e}", "danger")
 
     return redirect(url_for("dar_baja", establecimiento=est_filtro))
 

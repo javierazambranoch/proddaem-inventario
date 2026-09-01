@@ -12,9 +12,24 @@
         <option value="{{ id }}" {% if est_filtro == id|string %}selected{% endif %}>{{ nombre }}</option>
         {% endfor %}
     </select>
+    <input type="hidden" name="ubic" value="{{ filtro_ubic }}">
     <button type="submit">Filtrar</button>
 </form>
 {% endif %}
+
+<div class="buscador filtro-ubic">
+    <form method="GET" style="display:flex; gap:8px; align-items:center;">
+        {% if es_daem %}
+        <input type="hidden" name="establecimiento" value="{{ est_filtro }}">
+        {% endif %}
+        <label style="font-weight:600; color:#1565c0;">Filtrar por ubicación:</label>
+        <select name="ubic" onchange="this.form.submit()">
+            <option value="" {% if filtro_ubic == '' %}selected{% endif %}>Todas</option>
+            <option value="hc" {% if filtro_ubic == 'hc' %}selected{% endif %}>HC</option>
+            <option value="tp" {% if filtro_ubic == 'tp' %}selected{% endif %}>TP</option>
+        </select>
+    </form>
+</div>
 
 <div class="tabla-container">
 <table class="tabla">
@@ -41,12 +56,16 @@
             <td>{{ b[5] }}</td>
             <td>{{ est_nombres.get(b[9], 'Establecimiento ' ~ b[9]) }}</td>
             <td class="acciones">
+                {% if es_daem %}
+                <button type="button" class="btn-cambiar" onclick="abrirRespuesta('{{ b[0] }}', {{ b[9] }})">Responder</button>
+                {% else %}
                 <form method="POST" action="{{ url_for('dar_baja_reincorporar') }}" style="display:inline;"
                       onsubmit="return confirm('¿Reincorporar el equipo {{ b[0] }} al inventario?')">
                     <input type="hidden" name="codigo" value="{{ b[0] }}">
                     <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
                     <button type="submit" class="btn-reactivar">Reincorporar</button>
                 </form>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
@@ -56,4 +75,32 @@
     </tbody>
 </table>
 </div>
+
+{% if es_daem %}
+<div class="modal" id="modal-respuesta" style="display:none;">
+    <div class="modal-contenido">
+        <h3>Responder al Establecimiento</h3>
+        <p style="color:#666; font-size:13px;">Se enviará un mensaje tipo chat al establecimiento sobre el equipo dado de baja.</p>
+        <form method="POST" action="{{ url_for('dar_baja_responder') }}">
+            <input type="hidden" name="codigo" id="resp-codigo">
+            <input type="hidden" name="id_establecimiento" id="resp-est">
+            <input type="hidden" name="est_filtro" value="{{ est_filtro }}">
+            <div class="campo">
+                <label>Mensaje</label>
+                <textarea name="mensaje" rows="3" required placeholder="Escribe tu respuesta al establecimiento..."></textarea>
+            </div>
+            <button type="submit" class="btn-guardar">Enviar Respuesta</button>
+            <button type="button" class="btn-cancelar" onclick="document.getElementById('modal-respuesta').style.display='none'">Cancelar</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function abrirRespuesta(codigo, est) {
+    document.getElementById('resp-codigo').value = codigo;
+    document.getElementById('resp-est').value = est;
+    document.getElementById('modal-respuesta').style.display = 'flex';
+}
+</script>
+{% endif %}
 {% endblock %}
