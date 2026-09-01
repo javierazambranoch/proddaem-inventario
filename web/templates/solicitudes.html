@@ -18,6 +18,15 @@
 
 {% if not es_daem %}
 <form method="POST" action="{{ url_for('sol_enviar') }}" class="formulario">
+    {% if liceo_mode %}
+    <div class="campo" style="grid-column: 1 / -1;">
+        <label>HC / TP</label>
+        <select name="ubicacion">
+            <option value="HC">HC</option>
+            <option value="TP">TP</option>
+        </select>
+    </div>
+    {% endif %}
     <div class="campo">
         <label>Producto *</label>
         <input type="text" name="producto" required placeholder="Ej: Computador de escritorio">
@@ -55,10 +64,19 @@
 </form>
 {% endif %}
 
+{% if liceo_mode %}
+<div class="filtro-historial">
+    <a href="{{ url_for('solicitudes', ubic='todo', establecimiento=est_filtro, buscar=buscar) }}" class="{% if ubic == 'todo' %}activo{% endif %}">Todo</a>
+    <a href="{{ url_for('solicitudes', ubic='hc', establecimiento=est_filtro, buscar=buscar) }}" class="{% if ubic == 'hc' %}activo{% endif %}">HC</a>
+    <a href="{{ url_for('solicitudes', ubic='tp', establecimiento=est_filtro, buscar=buscar) }}" class="{% if ubic == 'tp' %}activo{% endif %}">TP</a>
+</div>
+{% endif %}
+
 <div class="tabla-container">
 <table class="tabla">
     <thead>
         <tr>
+            {% if liceo_mode %}<th>HC/TP</th>{% endif %}
             <th>N</th>
             <th>Producto</th>
             <th>Marca</th>
@@ -73,6 +91,7 @@
         {% for s in solicitudes %}
         {% set parts = s[2].split(' ', 1) if s[2] else [] %}
         <tr>
+            {% if liceo_mode %}<td>{% if s[6] %}{{ s[6] }}{% else %}-{% endif %}</td>{% endif %}
             <td>{{ s[0] }}</td>
             <td>{{ s[1] }}</td>
             <td>{{ parts[0] if parts else '-' }}</td>
@@ -107,7 +126,7 @@
         </tr>
         {% endfor %}
         {% if not solicitudes %}
-        <tr><td colspan="8" class="vacio">No se encontraron solicitudes.</td></tr>
+        <tr><td colspan="{% if liceo_mode %}9{% else %}8{% endif %}" class="vacio">No se encontraron solicitudes.</td></tr>
         {% endif %}
     </tbody>
 </table>

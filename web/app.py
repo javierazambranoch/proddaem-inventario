@@ -593,44 +593,50 @@ def solicitudes():
     lista = []
     buscar = request.args.get("buscar", "").strip()
     est_filtro = request.args.get("establecimiento", "0")
+    ubic = request.args.get("ubic", "todo").strip().lower()
+
+    # Liceo: filtro de ubicación HC/TP
+    if es_daem:
+        liceo_mode = est_filtro == str(EST_LICEO)
+    else:
+        liceo_mode = id_est == EST_LICEO
+    # Forzar filtro a "todo" para establecimientos que no son Liceo
+    ubic_cond = []
+    if liceo_mode and ubic in ("hc", "tp"):
+        ubic_cond.append("ubicacion ILIKE %s")
+        ubic_patron = [f"%{ubic}%"]
 
     try:
         conn = obtener_conexion()
         cur = conn.cursor()
 
+        base_sel = "SELECT id_solicitud, nombre_producto, nro_serie, cantidad, prioridad, estado, ubicacion "
+        base_from = "FROM solicitud "
+
+        def build(extra_conds, params):
+            conds = list(ubic_cond)
+            where = ""
+            if conds:
+                where = " WHERE " + " AND ".join(conds)
+            sql = base_sel + base_from + where
+            if extra_conds:
+                extra_where = " AND ".join(extra_conds)
+                sql = base_sel + base_from + (where + " AND " + extra_where if where else " WHERE " + extra_where)
+            sql += " ORDER BY fecha_solicitud DESC"
+            cur.execute(sql, list(ubic_patron if ubic_cond else []) + params)
+
         if es_daem and buscar:
             if est_filtro == "0":
-                cur.execute(
-                    "SELECT id_solicitud, nombre_producto, nro_serie, cantidad, prioridad, estado "
-                    "FROM solicitud WHERE nombre_producto ILIKE %s ORDER BY fecha_solicitud DESC",
-                    (f"%{buscar}%",)
-                )
+                build(["nombre_producto ILIKE %s"], [f"%{buscar}%"])
             else:
-                cur.execute(
-                    "SELECT id_solicitud, nombre_producto, nro_serie, cantidad, prioridad, estado "
-                    "FROM solicitud WHERE nombre_producto ILIKE %s AND id_establecimiento = %s "
-                    "ORDER BY fecha_solicitud DESC",
-                    (f"%{buscar}%", est_filtro)
-                )
+                build(["nombre_producto ILIKE %s AND id_establecimiento = %s"], [f"%{buscar}%", est_filtro])
         elif es_daem:
             if est_filtro == "0":
-                cur.execute(
-                    "SELECT id_solicitud, nombre_producto, nro_serie, cantidad, prioridad, estado "
-                    "FROM solicitud ORDER BY fecha_solicitud DESC"
-                )
+                build([], [])
             else:
-                cur.execute(
-                    "SELECT id_solicitud, nombre_producto, nro_serie, cantidad, prioridad, estado "
-                    "FROM solicitud WHERE id_establecimiento = %s ORDER BY fecha_solicitud DESC",
-                    (est_filtro,)
-                )
+                build(["id_establecimiento = %s"], [est_filtro])
         else:
-            cur.execute(
-                "SELECT id_solicitud, nombre_producto, nro_serie, cantidad, prioridad, estado "
-                "FROM solicitud WHERE id_usuario = %s AND id_establecimiento = %s "
-                "ORDER BY fecha_solicitud DESC",
-                (id_usuario, id_est)
-            )
+            build(["id_usuario = %s AND id_establecimiento = %s"], [id_usuario, id_est])
 
         lista = cur.fetchall()
 
@@ -652,7 +658,9 @@ def solicitudes():
                            solicitudes=lista,
                            buscar=buscar,
                            est_filtro=est_filtro,
-                           establecimientos=ESTABLECIMIENTOS)
+                           establecimientos=ESTABLECIMIENTOS,
+                           liceo_mode=liceo_mode,
+                           ubic=ubic)
 
 
 @app.route("/solicitudes/enviar", methods=["POST"])
@@ -670,6 +678,7 @@ def sol_enviar():
     prioridad = request.form.get("prioridad", "media").strip()
     caracteristicas = request.form.get("caracteristicas", "").strip()
     descripcion = request.form.get("descripcion", "").strip()
+    ubicacion = request.form.get("ubicacion", "").strip()
 
     if not producto or not marca or not modelo or not cantidad or not descripcion:
         flash("Producto, marca, modelo, cantidad y descripción son obligatorios.", "warning")
@@ -689,11 +698,12 @@ def sol_enviar():
         cur.execute(
             """INSERT INTO solicitud
             (nombre_producto, nro_serie, cantidad, caracteristicas,
-             estado, descripcion, prioridad, id_usuario, id_establecimiento, notif_cambio)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+             estado, descripcion, prioridad, id_usuario, id_establecimiento, notif_cambio, ubicacion)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             (producto, f"{marca} {modelo}", cantidad_num,
              caracteristicas if caracteristicas else None,
-             "pendiente", descripcion, prioridad, id_usuario, id_est, True)
+             "pendiente", descripcion, prioridad, id_usuario, id_est, True,
+             ubicacion if ubicacion else None)
         )
         conn.commit()
         conn.close()
