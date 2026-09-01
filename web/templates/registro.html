@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block titulo %}ProDaem - Registro{% endblock %}
+{% block contenido %}
+<h1>Registro General</h1>
+<p style="color:#666; margin-bottom:16px;">Resumen de todo lo que tiene tu establecimiento: inventario, equipos para dar de baja y solicitudes.</p>
+
+{% if es_daem %}
+<form method="GET" class="buscador">
+    <select name="establecimiento">
+        <option value="0" {% if est_filtro == '0' %}selected{% endif %}>DAEM (Todos)</option>
+        {% for nombre, id in establecimientos.items() %}
+        <option value="{{ id }}" {% if est_filtro == id|string %}selected{% endif %}>{{ nombre }}</option>
+        {% endfor %}
+    </select>
+    {% if liceo_mode %}
+    <select name="ubic" onchange="this.form.submit()">
+        <option value="todo" {% if filtro_ubic == 'todo' %}selected{% endif %}>Todo</option>
+        <option value="hc" {% if filtro_ubic == 'hc' %}selected{% endif %}>HC</option>
+        <option value="tp" {% if filtro_ubic == 'tp' %}selected{% endif %}>TP</option>
+    </select>
+    {% endif %}
+    <button type="submit">Ver</button>
+</form>
+{% endif %}
+
+{% if not es_daem and liceo_mode %}
+<div class="buscador filtro-ubic">
+    <form method="GET" style="display:flex; gap:8px; align-items:center;">
+        <label style="font-weight:600; color:#1565c0;">Filtrar por ubicación:</label>
+        <select name="ubic" onchange="this.form.submit()">
+            <option value="todo" {% if filtro_ubic == 'todo' %}selected{% endif %}>Todo</option>
+            <option value="hc" {% if filtro_ubic == 'hc' %}selected{% endif %}>HC</option>
+            <option value="tp" {% if filtro_ubic == 'tp' %}selected{% endif %}>TP</option>
+        </select>
+    </form>
+</div>
+{% endif %}
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px;">
+    <div class="perfil-info">
+        <strong style="color:#1565c0;">Inventario</strong>
+        <p style="font-size:28px; font-weight:700; margin:6px 0 0 0;">{{ total_inv }}</p>
+        <p style="font-size:12px; color:#c62828; margin:2px 0 0 0;">{{ no_operativos }} no operativo(s)</p>
+    </div>
+    <div class="perfil-info">
+        <strong style="color:#c62828;">Dar de Baja</strong>
+        <p style="font-size:28px; font-weight:700; margin:6px 0 0 0;">{{ total_bajas }}</p>
+        <p style="font-size:12px; color:#666; margin:2px 0 0 0;">equipos dados de baja</p>
+    </div>
+    <div class="perfil-info">
+        <strong style="color:#1565c0;">Solicitudes</strong>
+        <p style="font-size:28px; font-weight:700; margin:6px 0 0 0;">{{ total_sol }}</p>
+        <p style="font-size:12px; color:#c62828; margin:2px 0 0 0;">{{ sol_pendientes }} por atender</p>
+    </div>
+</div>
+
+<h2 style="color:#1565c0;">Inventario</h2>
+<div class="tabla-container">
+<table class="tabla">
+    <thead>
+        <tr><th>Código</th><th>Categoría</th><th>Marca</th><th>Modelo</th><th>Estado</th><th>Ubicación</th><th>Responsable</th></tr>
+    </thead>
+    <tbody>
+        {% for i in inventario %}
+        <tr>
+            <td>{{ i[0] }}</td>
+            <td>{{ i[1] }}</td>
+            <td>{{ i[2] }}</td>
+            <td>{{ i[3] }}</td>
+            <td><span class="badge badge-{{ i[4] }}">{{ i[4] }}</span></td>
+            <td>{{ i[5] }}</td>
+            <td>{{ i[6] if i[6] else '-' }}</td>
+        </tr>
+        {% endfor %}
+        {% if not inventario %}
+        <tr><td colspan="7" class="vacio">No hay equipos en inventario.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+
+<h2 style="color:#c62828; margin-top:24px;">Equipos para Dar de Baja</h2>
+<div class="tabla-container">
+<table class="tabla">
+    <thead>
+        <tr><th>Código</th><th>Categoría</th><th>Marca</th><th>Modelo</th><th>Ubicación</th><th>Motivo</th></tr>
+    </thead>
+    <tbody>
+        {% for b in bajas %}
+        <tr>
+            <td>{{ b[0] }}</td>
+            <td>{{ b[1] }}</td>
+            <td>{{ b[2] }}</td>
+            <td>{{ b[3] }}</td>
+            <td>{{ b[4] }}</td>
+            <td>{{ b[5] if b[5] else '-' }}</td>
+        </tr>
+        {% endfor %}
+        {% if not bajas %}
+        <tr><td colspan="6" class="vacio">No hay equipos para dar de baja.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+
+<h2 style="color:#1565c0; margin-top:24px;">Solicitudes</h2>
+<div class="tabla-container">
+<table class="tabla">
+    <thead>
+        <tr><th>N°</th><th>Producto</th><th>Prioridad</th><th>Estado</th></tr>
+    </thead>
+    <tbody>
+        {% for s in solicitudes %}
+        <tr>
+            <td>{{ s[0] }}</td>
+            <td>{{ s[1] }}</td>
+            <td><span class="badge badge-{{ s[2] }}">{{ s[2] }}</span></td>
+            <td><span class="badge badge-{{ s[3] }}">{{ s[3] }}</span></td>
+        </tr>
+        {% endfor %}
+        {% if not solicitudes %}
+        <tr><td colspan="4" class="vacio">No hay solicitudes.</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

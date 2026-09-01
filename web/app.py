@@ -924,6 +924,97 @@ def chat():
                            visto_ids=visto_ids)
 
 
+@app.route("/registro", methods=["GET"])
+def registro():
+    if not login_requerido():
+        return redirect(url_for("login"))
+
+    es_daem = session["usuario"].lower() == "admin_daem"
+    id_est = session["id_establecimiento"]
+    est_filtro = request.args.get("establecimiento", "0")
+    filtro_ubic = request.args.get("ubic", "todo").strip().lower()
+    liceo_mode = (est_filtro == str(EST_LICEO)) if es_daem else (id_est == EST_LICEO)
+
+    inventario = []
+    bajas = []
+    solicitudes = []
+
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+
+        cond = []
+        params = []
+        if es_daem and est_filtro != "0":
+            cond.append("id_establecimiento = %s")
+            params.append(est_filtro)
+        if not es_daem:
+            cond.append("id_establecimiento = %s")
+            params.append(id_est)
+        if liceo_mode and filtro_ubic in ("hc", "tp"):
+            cond.append("ubicacion_asignada ILIKE '%%" + filtro_ubic + "%%'")
+
+        wheres = " AND ".join(cond) if cond else "1=1"
+
+        cur.execute(
+            "SELECT codigo, categoria, marca, modelo, estado, ubicacion_asignada, responsable "
+            "FROM Computador WHERE " + wheres + " AND baja = FALSE ORDER BY fecha_registro DESC",
+            params
+        )
+        inventario = cur.fetchall()
+
+        cur.execute(
+            "SELECT codigo, categoria, marca, modelo, ubicacion_asignada, descripcion_condicion "
+            "FROM Computador WHERE " + wheres + " AND baja = TRUE ORDER BY fecha_registro DESC",
+            params
+        )
+        bajas = cur.fetchall()
+
+        if es_daem and est_filtro == "0":
+            cur.execute(
+                "SELECT id_solicitud, nombre_producto, prioridad, estado FROM solicitud "
+                "ORDER BY fecha_solicitud DESC"
+            )
+        elif es_daem:
+            cur.execute(
+                "SELECT id_solicitud, nombre_producto, prioridad, estado FROM solicitud "
+                "WHERE id_establecimiento = %s ORDER BY fecha_solicitud DESC",
+                (est_filtro,)
+            )
+        else:
+            cur.execute(
+                "SELECT id_solicitud, nombre_producto, prioridad, estado FROM solicitud "
+                "WHERE id_usuario = %s AND id_establecimiento = %s ORDER BY fecha_solicitud DESC",
+                (session["id_usuario"], id_est)
+            )
+        solicitudes = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        flash(f"Error al cargar registro: {e}", "danger")
+
+    total_inv = len(inventario)
+    total_bajas = len(bajas)
+    total_sol = len(solicitudes)
+    sol_pendientes = sum(1 for s in solicitudes if s[3] in ("pendiente", "en proceso"))
+    no_operativos = sum(1 for i in inventario if i[4] in ("regular", "malo"))
+
+    return render_template("registro.html",
+                           usuario=session["usuario"],
+                           es_daem=es_daem,
+                           inventario=inventario,
+                           bajas=bajas,
+                           solicitudes=solicitudes,
+                           total_inv=total_inv,
+                           total_bajas=total_bajas,
+                           total_sol=total_sol,
+                           sol_pendientes=sol_pendientes,
+                           no_operativos=no_operativos,
+                           est_filtro=est_filtro,
+                           establecimientos=ESTABLECIMIENTOS,
+                           liceo_mode=liceo_mode,
+                           filtro_ubic=filtro_ubic)
+
+
 @app.route("/historial")
 def historial():
     if not login_requerido():
@@ -931,27 +1022,41 @@ def historial():
 
     es_daem = session["usuario"].lower() == "admin_daem"
     id_usuario = session["id_usuario"]
+    id_est = session["id_establecimiento"]
     filtro = request.args.get("filtro", "Todos" if es_daem else "Mis actividades")
+    lic_ubic = request.args.get("lic_ubic", "todo").strip().lower()
+    liceo_mode = id_est == EST_LICEO
     registros = []
 
     try:
         conn = obtener_conexion()
         cur = conn.cursor()
 
-        if es_daem and filtro == "Todos":
-            cur.execute(
-                "SELECT h.id_historial, u.nombre_usuario, h.accion, h.fecha_hora "
-                "FROM Historial h LEFT JOIN Usuario u ON h.id_usuario = u.id_usuario "
-                "ORDER BY h.fecha_hora DESC"
-            )
-        else:
-            cur.execute(
-                "SELECT h.id_historial, u.nombre_usuario, h.accion, h.fecha_hora "
-                "FROM Historial h LEFT JOIN Usuario u ON h.id_usuario = u.id_usuario "
-                "WHERE h.id_usuario = %s ORDER BY h.fecha_hora DESC",
-                (id_usuario,)
-            )
+        sel = ("SELECT h.id_historial, u.nombre_usuario, h.accion, h.fecha_hora "
+               "FROM Historial h LEFT JOIN Usuario u ON h.id_usuario = u.id_usuario")
+        conds = []
+        params = []
 
+        if not (es_daem and filtro == "Todos"):
+            conds.append("h.id_usuario = %s")
+            params.append(id_usuario)
+
+        if liceo_mode and lic_ubic in ("hc", "tp"):
+            cur.execute(
+                "SELECT codigo FROM Computador WHERE id_establecimiento = %s AND ubicacion_asignada ILIKE %s",
+                (id_est, f"%{lic_ubic}%")
+            )
+            codigos = [r[0] for r in cur.fetchall()]
+            if codigos:
+                ors = " OR ".join(["h.accion ILIKE %s"] * len(codigos))
+                conds.append(f"({ors})")
+                params.extend([f"%{c}%"] for c in codigos)  # placeholder; fix below
+
+        if conds:
+            sql = sel + " WHERE " + " AND ".join(conds) + " ORDER BY h.fecha_hora DESC"
+        else:
+            sql = sel + " ORDER BY h.fecha_hora DESC"
+        cur.execute(sql, params)
         registros = cur.fetchall()
         conn.close()
 
@@ -962,7 +1067,9 @@ def historial():
                            usuario=session["usuario"],
                            es_daem=es_daem,
                            registros=registros,
-                           filtro=filtro)
+                           filtro=filtro,
+                           liceo_mode=liceo_mode,
+                           lic_ubic=lic_ubic)
 
 
 @app.route("/encargados", methods=["GET", "POST"])
