@@ -1,9 +1,14 @@
 ﻿* { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #333; }
 
-.login-body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f7fa; }
+.login-body { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; background: #f5f7fa; padding: 24px; }
 .login-container { background: #fff; padding: 40px; border-radius: 12px; width: 100%; max-width: 380px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); text-align: center; }
 .login-logo { display: block; max-width: 200px; max-height: 90px; margin: 0 auto 12px; object-fit: contain; }
+.login-contacto { background: #fff; padding: 24px; border-radius: 12px; width: 100%; max-width: 380px; margin: 20px auto; box-shadow: 0 2px 12px rgba(0,0,0,0.08); text-align: center; }
+.login-contacto h3 { color: #e1843e; font-size: 18px; margin-bottom: 12px; }
+.login-contacto p { color: #555; font-size: 13px; margin-bottom: 6px; line-height: 1.5; }
+.login-contacto a { color: #e1843e; text-decoration: none; }
+.login-contacto a:hover { text-decoration: underline; }
 .login-container h1 { color: #e1843e; font-size: 28px; margin-bottom: 4px; }
 .login-container p { color: #666; margin-bottom: 24px; }
 .login-container label { display: block; text-align: left; font-size: 13px; color: #555; margin-bottom: 4px; margin-top: 10px; }
