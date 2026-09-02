@@ -7,8 +7,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='estilo.css') }}">
 </head>
 <body class="login-body">
-    <div class="login-container">
+    <div class="login-cabecera">
         <img class="login-logo" src="https://daemnacimiento.cl/wp-content/uploads/2024/10/logo_web_2.png" alt="Logo DAEM">
+    </div>
+    <div class="login-container">
         <h1>ProDaem</h1>
         <p>Sistema de Inventario DAEM</p>
         {% with mensajes = get_flashed_messages(with_categories=true) %}
