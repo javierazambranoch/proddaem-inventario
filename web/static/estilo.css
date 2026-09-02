@@ -6,6 +6,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .login-cabecera { position: relative; width: 100%; text-align: left; margin-bottom: 90px; }
 .login-barra { width: 100%; height: 70px; background: #e1843e; }
 .login-logo { position: absolute; top: 6px; left: 16px; display: block; max-width: calc(220px + 2cm); max-height: none; object-fit: contain; }
+.login-contacto-link { position: absolute; top: 50%; right: 24px; transform: translateY(-50%); color: #fff; text-decoration: none; font-size: 16px; font-weight: bold; }
 .login-contacto { background: #fff; padding: 24px; border-radius: 12px; width: 100%; max-width: 380px; margin: 20px auto; box-shadow: 0 2px 12px rgba(0,0,0,0.08); text-align: center; }
 .login-contacto h3 { color: #e1843e; font-size: 18px; margin-bottom: 12px; }
 .login-contacto p { color: #555; font-size: 13px; margin-bottom: 6px; line-height: 1.5; }
