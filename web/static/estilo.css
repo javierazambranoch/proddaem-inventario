@@ -3,6 +3,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 
 .login-body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f7fa; }
 .login-container { background: #fff; padding: 40px; border-radius: 12px; width: 100%; max-width: 380px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); text-align: center; }
+.login-logo { display: block; max-width: 200px; max-height: 90px; margin: 0 auto 12px; object-fit: contain; }
 .login-container h1 { color: #e1843e; font-size: 28px; margin-bottom: 4px; }
 .login-container p { color: #666; margin-bottom: 24px; }
 .login-container label { display: block; text-align: left; font-size: 13px; color: #555; margin-bottom: 4px; margin-top: 10px; }
