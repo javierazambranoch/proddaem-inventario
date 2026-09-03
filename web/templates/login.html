@@ -10,7 +10,7 @@
     <div class="login-cabecera">
         <div class="login-barra"></div>
         <img class="login-logo" src="https://daemnacimiento.cl/wp-content/uploads/2024/10/logo_web_2.png" alt="Logo DAEM">
-        <a class="login-contacto-link" href="#contacto">Contacto</a>
+        <a class="login-contacto-link" href="#" onclick="toggleContacto(event)">Contacto</a>
     </div>
     <div class="login-container">
         <h1>ProDaem</h1>
@@ -32,6 +32,7 @@
     </div>
 
     <div class="login-contacto" id="contacto">
+        <span class="login-contacto-cerrar" onclick="toggleContacto(event)">&times;</span>
         <h3>Contacto</h3>
         <p><strong>Departamento de Administración de Educación Municipal de Nacimiento</strong></p>
         <p>Sta. Margarita 518, Nacimiento, Región del Bío Bío</p>
@@ -40,4 +41,11 @@
         <p><a href="https://daemnacimiento.cl" target="_blank">daemnacimiento.cl</a></p>
     </div>
 </body>
+<script>
+function toggleContacto(event) {
+    event.preventDefault();
+    var panel = document.getElementById('contacto');
+    panel.classList.toggle('abierto');
+}
+</script>
 </html>
