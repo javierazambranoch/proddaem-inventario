@@ -26,7 +26,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .sidebar-header h2 { font-size: 20px; }
 .sidebar-header p { font-size: 12px; color: #fde6cd; margin-top: 4px; }
 .sidebar-logo { display: block; max-width: 210px; max-height: 105px; margin: 0 auto 10px; object-fit: contain; position: relative; left: -12px; }
-.sidebar nav { flex: 1; padding: 10px 0; }
+.sidebar nav { flex: 1; padding: 10px 0; overflow-y: auto; }
 .sidebar nav a { display: block; padding: 12px 20px; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; transition: 0.2s; }
 .sidebar nav a:hover, .sidebar nav a.activo { background: rgba(255,255,255,0.15); color: #fff; }
 .btn-salir { display: block; padding: 12px 20px; color: #ef9a9a; text-decoration: none; border-top: 1px solid rgba(255,255,255,0.15); font-size: 13px; }
